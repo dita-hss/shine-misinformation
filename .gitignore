@@ -3,7 +3,6 @@ appengine-generated/
 /config
 /.idea
 .DS_Store
-package-lock.json
 .GoogleCloud
 
 # dependencies
