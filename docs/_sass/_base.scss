@@ -1,0 +1,299 @@
+/*
+  Reset some basic elements
+*/
+
+body, h1, h2, h3, h4, h5, h6,
+p, blockquote, pre, hr,
+dl, dd, ol, ul, figure {
+  margin: 0;
+  padding: 0;
+}
+
+/*
+  Basic styling
+*/
+
+html {
+  position: relative;
+  min-height: 100vh;
+}
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+footer {
+  margin-top: auto;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: bold;
+  line-height: 1.25;
+  text-rendering: optimizeLegibility;
+}
+h1, h2, h3 {
+  letter-spacing: -0.01em;
+}
+
+h1 {
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
+}
+h2 {
+  margin-bottom: 0.4rem;
+  margin-top: 2rem;
+  font-size: 1.75rem;
+}
+h3, h4, h5, h6 {
+  margin-bottom: 0;
+}
+h3 {
+  margin-top: 1.75rem;
+  font-size: 1.25rem;
+}
+h4, h5, h6 {
+  margin-top: 1.5rem;
+  font-size: 1.125rem;
+}
+h4 {
+  text-decoration: underline;
+}
+h5, h6 {
+  margin-bottom: -0.85em;
+}
+
+/* Body */
+body {
+  font-family: $base-font-family;
+}
+body img,
+body canvas {
+  margin: 0.4rem auto auto auto;
+  display: block;
+  max-height: 360px;
+  max-width: 800px;
+  width: auto;
+  height: auto;
+}
+body img.inline-img,
+body canvas.inline-img {
+  display: inline;
+  width: auto;
+  margin-left: 0.06em;
+  margin-right: 0.06em;
+  vertical-align: -10%;
+}
+.content-wrapper img,
+.content-wrapper canvas {
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+}
+.content-wrapper img.inline-img,
+.content-wrapper canvas.inline-img {
+  box-shadow: none;
+}
+.content-wrapper figure#header-image img {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+.content-wrapper figure#lead-image img {
+  box-shadow: 0 1px 10px rgba(0, 0, 0, 0.3);
+  margin-top: 1em;
+  // max-height: 10em;
+}
+
+/* The 'How To Play' page requires custom styling of its images. */
+.content-wrapper img.h2p-img {
+  border: 1px solid rgb(156, 163, 175);
+  border-radius: 0.375rem;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+figure.about-links {
+  display: inline-block;
+  text-align: center;
+  width: 100%;
+  line-height: 6rem;
+  vertical-align: middle;
+}
+a.about-link-logo {
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
+a.about-link-logo img {
+  margin: 0;
+}
+a.about-link-logo, a.about-link-logo img {
+  display: inline-block;
+  vertical-align: middle;
+  max-width: 400px;
+  max-height: 6rem;
+  width: auto;
+  height: auto;
+  box-shadow: none;
+}
+
+iframe {
+  display: block;
+  margin-top: 0.4em;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+figure {
+  padding-bottom: 0.3em;
+}
+figure img,
+figure canvas,
+figure iframe {
+  max-width: 100%;
+}
+figure canvas.gif {
+  cursor: pointer;
+}
+figure figcaption {
+  text-align: center;
+  font-style: italic;
+  color: #444444;
+  margin-top: 0.6em;
+}
+.content-wrapper figure > figcaption > a,
+figure > figcaption > a {
+  color: #444444;
+  text-decoration: none;
+}
+.content-wrapper figure > figcaption > a:hover,
+figure > figcaption > a:hover {
+  color: #222222;
+  text-decoration: underline;
+}
+figure .figure-side-by-side {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+}
+figure .figure-side-by-side img,
+figure .figure-side-by-side canvas {
+  flex: 0;
+  margin: 0.4rem 0.4rem 0;
+}
+
+p {
+  display: block;
+  margin-top: 0.6em;
+  margin-bottom: 1em;
+  margin-left: 0;
+  margin-right: 0;
+  line-height: 1.65;
+  font-family: $body-font-family;
+}
+p.spacer {
+  padding: 0.2em;
+}
+
+/* Lists */
+ul, ol, dl {
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+  margin-left: 1.5rem;
+  font-family: $body-font-family;
+}
+
+ol li {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  margin-left: 1.5rem;
+}
+
+li {
+  margin-bottom: 1rem;
+}
+
+dt {
+  font-weight: bold;
+}
+dd {
+  margin-bottom: .5rem;
+}
+
+/*
+  Links
+*/
+
+a {
+  color: $brand-color;
+  text-decoration: none;
+}
+
+/* Offsets heading and figure links so that they aren't hidden below the header. */
+h1::before, h2::before, h3::before,
+h4::before, h5::before, h6::before,
+figure::before {
+  content: '';
+  display: block;
+  height: $heading-link-offset;
+  margin-top: -$heading-link-offset;
+  visibility: hidden;
+}
+
+/*
+  Blockquote
+*/
+
+blockquote {
+  margin: 10px 20px 10px;
+  padding: 0px 15px;
+  border-left: 0.25em solid #ccc;
+  color: #999;
+  line-height: 1.5;
+}
+
+/**
+ * Tables
+ */
+table {
+  border-collapse: collapse;
+  margin-bottom: 30px;
+  width: 100%;
+}
+
+table, th, td {
+  border: 1px solid black;
+}
+th, td {
+  padding: 15px;
+  text-align: left;
+}
+
+
+/**
+ * Info boxes.
+ */
+p.info,
+p.update,
+p.error {
+  display: inline-block;
+  border-radius: 0.4rem;
+  border: 1px solid;
+  padding: 0.8rem 1rem;
+  margin: 0.4rem 0 0;
+  max-width: 600px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+p.info {
+  background-color: #f0f6fc;
+  border-color: #006be2;
+  color: #011933;
+}
+p.update {
+  background-color: #e8faef;
+  border-color: #30db69;
+  color: #013313;
+}
+p.error {
+  background-color: #fcf0f1;
+  border-color: #e20000;
+  color: #330101;
+}

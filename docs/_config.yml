@@ -1,0 +1,18 @@
+
+title: The Misinformation Game
+description: The Misinformation Game is a social-media simulator built to study how people interact with information on social-media. It's also free and open-source!
+author: Padraig X. Lamont, Lucy Butler, Dean Law Yim Wan, Ullrich Ecker
+
+markdown: kramdown
+highlighter: rouge
+permalink: /:title
+plugins: [jekyll-sitemap, jekyll-seo-tag]
+
+sass:
+  sass_dir: _sass
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      image: /screenshots/example-game.png

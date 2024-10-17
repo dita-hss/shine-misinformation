@@ -1,2 +1,50 @@
 # Google App Engine generated folder
 appengine-generated/
+/.idea
+.DS_Store
+package-lock.json
+.GoogleCloud
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+/firebase-debug.log
+/firestore-debug.log
+
+# production
+/build
+
+# documentation site
+/docs/.jekyll-cache
+/docs/_site
+
+# misc
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+.idea
+**/node_modules/*
+**/.firebase
+**/.firebaserc
+**/.runtimeconfig.json
+*/npm-debug.log
+lerna-debug.log
+*~
+service-account-credentials.json
+**/ui-debug.log
+**/database-debug.log
+**/firebase-debug.log
+**/pubsub-debug.log
+**/tsconfig-compile.json
+yarn.lock
+pnpm-lock.yaml

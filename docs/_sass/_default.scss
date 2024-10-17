@@ -1,0 +1,211 @@
+/*
+  Site container
+*/
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+.container {
+  flex-grow: 1;
+}
+
+.content-wrapper .page-path {
+  padding-top: 0.6em;
+  color: #5f5f5f;
+}
+.content-wrapper .page-path a {
+  color: #6c6c6c;
+}
+.content-wrapper .config-loc {
+  padding-top: 0;
+  padding-left: 0.35em;
+  color: #5f5f5f;
+  margin-bottom: -0.5em;
+}
+
+.recommendation {
+  display: inline-block;
+  color: black;
+  font-weight: 800;
+  text-decoration: underline;
+}
+.recommendation::after {
+  display: inline-block;
+  content: ":";
+  text-decoration: none;
+}
+
+.param-links {
+  margin-top: -0.6rem;
+}
+.content-wrapper a.param-link {
+  display: inline-block;
+  text-decoration: none;
+}
+.content-wrapper a.param-link:hover {
+  text-decoration: underline;
+}
+
+a.back-to-top, .content-wrapper a.back-to-top {
+  display: block;
+  text-align: center;
+  margin-top: 1rem;
+
+  color: #6c6c6c;
+  text-decoration: underline;
+}
+
+.content-wrapper a {
+  color: $brand-color;
+  text-decoration: underline;
+}
+.content-wrapper a:hover {
+  color: $brand-color-darker;
+}
+
+ul#markdown-toc {
+  display: inline-block;
+  background-color: #fdfdfd;
+  border: 1px solid #666666;
+  border-radius: 0.4rem;
+  padding: 1.2rem 2rem 0.5rem;
+  margin: 0.4rem 0 0;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+ul#markdown-toc a {
+  text-decoration: none;
+}
+ul#markdown-toc > li > a {
+  font-weight: bold;
+  font-size: 1.125em;
+}
+ul#markdown-toc > li > ul > li {
+  margin-bottom: 0.6rem;
+}
+ul#markdown-toc > li > ul > li > a{
+  font-weight: bold;
+}
+ul#markdown-toc > li > ul > li > ul {
+  margin-top: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+ul#markdown-toc > li > ul > li > ul > li {
+  margin-bottom: 0.4rem;
+}
+
+.content-wrapper {
+  h1, h2, h3, h4, h5, h6 {
+    a.header-link {
+      color: $brand-color;
+      text-decoration: none;
+
+      opacity: 0;
+      transition: opacity ease-in-out 0.2s;
+    }
+    &:hover {
+      a.header-link {
+        opacity: 0.6;
+        transition: opacity ease-in-out 0.2s;
+        &:hover {
+          opacity: 1;
+          transition: opacity ease-in-out 0.2s;
+        }
+      }
+    }
+  }
+  h1, h2, h3 {
+    a.header-link:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.container .content-wrapper {
+  display: block;
+  padding: $header-thickness+10px 1.8em 0;
+  margin: auto;
+  max-width: $container-width;
+}
+.container.article .content-wrapper {
+  max-width: $article-width;
+}
+.content-wrapper h1 {
+  margin: 20px 0 5px;
+}
+
+.content-wrapper .call-to-action-container {
+  display: block;
+  text-align: center;
+  margin-top: 0.4em;
+  margin-bottom: 2.4em;
+}
+.content-wrapper a.call-to-action-button {
+  display: inline-block;
+  padding: 0.5em 1.1em;
+  border-radius: 0.6em;
+  border: 2px solid $brand-color;
+  color: $brand-color;
+  box-shadow: 1px 1px 4px -1px rgba(0,0,0,0.65);
+  text-decoration: none;
+  font-size: 1.1em;
+  transition: background-color 0.2s;
+  margin: 0.6em;
+}
+.content-wrapper a.call-to-action-button.solid,
+.content-wrapper .big a.call-to-action-button {
+  background-color: $brand-color;
+  color: white;
+}
+.content-wrapper .big a.call-to-action-button {
+  background-color: $brand-color;
+  color: white;
+  padding: 0.35em 1.2em 0.45em;
+  font-size: 1.2em;
+}
+.content-wrapper a.call-to-action-button:hover {
+  text-decoration: underline;
+}
+.content-wrapper a.call-to-action-button.solid:hover,
+.content-wrapper .big a.call-to-action-button:hover {
+  background-color: $brand-color-lighter;
+  transition: background-color 0.2s;
+}
+
+.content-wrapper .blue-figure-border {
+  img, iframe, canvas {
+    border: 4px solid $brand-color;
+    border-radius: 4px;
+  }
+}
+
+.content-wrapper .black-figure-border {
+  img, iframe, canvas {
+    border: 4px solid black;
+    border-radius: 4px;
+  }
+}
+
+.content-wrapper .icons-list {
+  display: flex;
+  flex-direction: row-reverse;
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: 1em;
+  margin-top: -8px;
+  a {
+    text-decoration: none;
+  }
+  img {
+    display: inline-block;
+    box-shadow: none;
+    height: 44px;
+    width: auto;
+    margin-right: 14px;
+  }
+  a.left {
+    margin-right: auto;
+    padding-top: 0;
+  }
+}

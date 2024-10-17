@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+{% include head.html %}
+<body>
+  <!-- Allows linking to the top of the page. -->
+  <a id="top"></a>
+
+  {% unless page.hideHeader %}
+  {% include header.html %}
+  {% endunless %}
+
+  {% if page.isArticle %}
+  <div class="container article">
+  {% else %}
+  <div class="container">
+  {% endif %}
+
+    <div class="content-wrapper">
+
+      <!-- Show the path to this page on non-home pages. -->
+      {% if page.showPath %}
+        <div class="page-path">
+          <a href="/">Home</a>
+          &gt;
+          {% if page.underDocsPath %}
+          <a href="/DocumentationIndex">Docs</a>
+          &gt;
+          {% endif %}
+          {% if page.underArticlesPath %}
+          <a href="/articles">Articles</a>
+          &gt;
+          {% endif %}
+          <a href="{{ page.url }}">
+            {% if page.pathNameOverride %}
+              {{ page.pathNameOverride }}
+            {% else %}
+              {{ page.title }}
+            {% endif %}
+          </a>
+        </div>
+      {% endif %}
+
+      <!-- This includes the content of the page. -->
+      {% include anchor_headings.html html=content anchorBody="#" anchorClass="header-link" %}
+
+      {% if page.showBackToTop %}
+        <a class="back-to-top" href="#top">Back to Top</a>
+      {% endif %}
+    </div>
+  </div>
+  {% include footer.html %}
+
+  {% if page.showBackToTop %}
+    {% include backtotop.html %}
+  {% endif %}
+
+  <script type="text/javascript" src="/assets/js/gif-playback.js" defer></script>
+</body>
+</html>
