@@ -4,6 +4,7 @@ import {ContinueButton} from "../../components/ContinueButton";
 import {ErrorLabel, ProgressLabel} from "../../components/StatusLabel"
 import {ActiveGameScreen} from "./ActiveGameScreen";
 import {MountAwareComponent} from "../../components/MountAwareComponent";
+///a.h.s change 1
 import {ParticipantProgress} from "./ParticipantProgress";
 import smoothscroll from 'smoothscroll-polyfill';
 import {PostComponent} from "./Post";
@@ -612,23 +613,30 @@ export class GameScreen extends ActiveGameScreen {
         }
 
         return (
-            <>
-                {displayPrompt &&
-                    <GamePrompt study={study} onClick={(enabled) => {
-                        if (enabled) {
-                            this.onPromptContinue(study);
-                        }
-                    }} />}
+          <>
+            {displayPrompt && (
+              <GamePrompt
+                study={study}
+                onClick={(enabled) => {
+                  if (enabled) {
+                    this.onPromptContinue(study);
+                  }
+                }}
+              />
+            )}
 
-                <div className={"flex flex-row items-start w-full bg-gray-100 " +
-                                (displayPrompt ? " filter blur " : "")}
-                     style={{minHeight: "100vh"}}>
-
-                    {/* Space to the left. */}
-                    <div className="flex-1" />
-
-                    {/* Progress. */}
-                    {participant && !error &&
+            <div
+              className={
+                "flex flex-row items-start w-full bg-gray-100 " +
+                (displayPrompt ? " filter blur " : "")
+              }
+              style={{ minHeight: "100vh" }}
+            >
+              {/* Space to the left. */}
+              <div className="flex-1" />
+              {/* Progress. */}
+              {/* ///a.h.s change 2 */}
+              {participant && !error &&
                         <ParticipantProgress
                             displayFollowers={study.uiSettings.displayFollowers}
                             displayCredibility={study.uiSettings.displayCredibility}
@@ -657,38 +665,37 @@ export class GameScreen extends ActiveGameScreen {
                             }
                             followerChange={this.state.followerChange}
                             credibilityChange={this.state.credibilityChange}/>}
-
-                    {/* Space in the middle. */}
-                    <div className="flex-1 max-w-mini" />
-
-                    {/* The posts and their associated comments. */}
-                    <div id="post-feed"
-                         className="relative bg-gray-200 w-full md:max-w-xl
+              {/* Space in the middle. */}
+              <div className="flex-1 max-w-mini" />
+              {/* The posts and their associated comments. */}
+              <div
+                id="post-feed"
+                className="relative bg-gray-200 w-full md:max-w-xl
                                     md:border-l-2 md:border-r-2 md:border-gray-700 shadow-2xl"
-                         style={{minHeight: "100vh"}}>
+                style={{ minHeight: "100vh" }}
+              >
+                {/* Post, reactions, and comments. */}
+                {postComponents}
 
-                        {/* Post, reactions, and comments. */}
-                        {postComponents}
+                {/* The end of the feed. */}
+                {!displayGameEnd && study.uiSettings.displayPostsInFeed && (
+                  <FeedEnd onContinue={() => this.submitAll(game)} />
+                )}
 
-                        {/* The end of the feed. */}
-                        {!displayGameEnd && study.uiSettings.displayPostsInFeed &&
-                            <FeedEnd onContinue={() => this.submitAll(game)} />}
+                {/* If the game is finished, display a game completed prompt. */}
+                {displayGameEnd && <GameFinished study={study} game={game} />}
 
-                        {/* If the game is finished, display a game completed prompt. */}
-                        {displayGameEnd && <GameFinished study={study} game={game} />}
+                {/* If there is an error, display it here. */}
+                {error && <ErrorLabel value={error} />}
 
-                        {/* If there is an error, display it here. */}
-                        {error && <ErrorLabel value={error} />}
-
-                        {/* Used for reserving space below reactions and progress. */}
-                        <div className="h-56 md:h-8" />
-                    </div>
-
-                    {/* Space to the right. */}
-                    <div className="flex-1" />
-                    <div className="flex-1" />
-                </div>
-            </>
+                {/* Used for reserving space below reactions and progress. */}
+                <div className="h-56 md:h-8" />
+              </div>
+              {/* Space to the right. */}
+              <div className="flex-1" />
+              <div className="flex-1" />
+            </div>
+          </>
         );
     }
 }

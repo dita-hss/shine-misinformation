@@ -24,6 +24,7 @@ package-lock.json
 /docs/_site
 
 # misc
+.env
 .env.local
 .env.development.local
 .env.test.local
