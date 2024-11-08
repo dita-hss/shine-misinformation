@@ -103,6 +103,8 @@ function constructWorkbook(study, results, problems) {
         {header: "Post Likes", key: "postLikes", width: 20, enabled: showPostLikes},
         {header: "Post Dislikes", key: "postDislikes", width: 20, enabled: showPostDislikes},
         {header: "Post Shares", key: "postShares", width: 20, enabled: showPostShares},
+        ///a.h.s change: adding the share target column to the excel file
+        {header: "Share Targets", key: "shareTargets", width: 40, enabled: showPostShares},
         {header: "Post Flags", key: "postFlags", width: 20, enabled: showPostFlags},
 
         {header: "Liked Post", key: "likedPost", width: 20, enabled: showPostLikes},
@@ -124,10 +126,10 @@ function constructWorkbook(study, results, problems) {
         {header: "Credibility After", key: "afterCredibility", width: 22, enabled: showCredibility},
         {header: "Followers After", key: "afterFollowers", width: 22, enabled: showFollowers},
     ]);
+    
     for(let index = 0; index < results.length; index++) {
         const game = results[index];
         const participant = game.participant;
-
         for (let stateIndex = 0; stateIndex < game.states.length; stateIndex++) {
             const state = game.states[stateIndex];
             const likes = state.currentPost.numberOfReactions.like;
@@ -135,10 +137,14 @@ function constructWorkbook(study, results, problems) {
             const shares = state.currentPost.numberOfReactions.share;
             const flags = state.currentPost.numberOfReactions.flag;
             const interaction = participant.postInteractions.get(stateIndex);
+            console.log(interaction.shareTargets);
             const beforeCredibility = Math.round(participant.credibilityHistory[stateIndex]);
             const afterCredibility = Math.round(participant.credibilityHistory[stateIndex + 1]);
             const beforeFollowers = Math.round(participant.followerHistory[stateIndex]);
             const afterFollowers = Math.round(participant.followerHistory[stateIndex + 1]);
+
+            // if the shared with targets is an empty array , change it to an empty string
+            
             postsWorksheet.addRow({
                 sessionID: game.sessionID,
                 participantID: participant.participantID || "",
@@ -161,6 +167,10 @@ function constructWorkbook(study, results, problems) {
                 flaggedPost: interaction.hasPostReaction("flag"),
                 skippedPost: interaction.hasPostReaction("skip"),
                 comment: interaction.comment || "",
+                
+                ///a.h.s change: adding the value of share target column to the excel file
+                shareTargets: interaction.shareTargets || "",
+
 
                 dwellTime: numToCellValue(interaction.timer.getDwellTimeMS()),
                 firstInteractTime: numToCellValue(interaction.timer.getTimeToFirstInteractMS()),

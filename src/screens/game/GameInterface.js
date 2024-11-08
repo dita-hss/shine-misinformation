@@ -139,563 +139,615 @@ class GameFinished extends MountAwareComponent {
  * and many posts and comments.
  */
 export class GameScreen extends ActiveGameScreen {
-    constructor(props) {
-        super(props, ["introduction-or-game", "game", "debrief"]);
-        this.defaultState = {
-            ...this.defaultState,
+  constructor(props) {
+    super(props, ["introduction-or-game", "game", "debrief"]);
+    this.defaultState = {
+      ...this.defaultState,
 
-            error: null,
+      error: null,
 
-            allowReactions: true,
-            interactions: GamePostInteractionStore.empty(),
-            dismissedPrompt: false,
+      allowReactions: true,
+      interactions: GamePostInteractionStore.empty(),
+      dismissedPrompt: false,
 
-            overrideFollowers: null,
-            overrideCredibility: null,
+      overrideFollowers: null,
+      overrideCredibility: null,
+      followerChange: null,
+      credibilityChange: null,
+    };
+    this.state = this.defaultState;
+    this.scrollTracker = new ScrollTracker(
+      this.getFeedDiv.bind(this),
+      this.onPostMove.bind(this)
+    );
+    this.scrollToNextPostAfterNextUpdate = null;
+
+    const dynamicFeedbackAnimateTime = 500;
+    this.dynamicFeedbackFollowers = new DynamicFeedbackController(
+      dynamicFeedbackAnimateTime,
+      this.updateDynamicFeedbackFollowers.bind(this)
+    );
+    this.dynamicFeedbackCredibility = new DynamicFeedbackController(
+      dynamicFeedbackAnimateTime,
+      this.updateDynamicFeedbackCredibility.bind(this)
+    );
+
+    this.changeTimeoutID = null;
+    this.reactDelayTimeoutID = null;
+  }
+
+  afterGameLoaded(game) {
+    super.afterGameLoaded(game);
+
+    const inters = game.participant.postInteractions;
+    this.setStateIfMounted(() => {
+      this.scrollToNextPostAfterNextUpdate = inters.getCurrentPostIndex();
+      return {
+        interactions: inters.copy(),
+        dismissedPrompt: game.isFinished(),
+      };
+    });
+  }
+
+  cancelReactDelay() {
+    if (this.reactDelayTimeoutID !== null) {
+      clearTimeout(this.reactDelayTimeoutID);
+      this.reactDelayTimeoutID = null;
+    }
+  }
+
+  startReactDelay(game) {
+    this.cancelReactDelay();
+
+    if (!game) {
+      game = this.state.game;
+      if (!game) throw new Error("There is no active game!");
+    }
+
+    const setAllowReactions = (allowReactions) => {
+      this.setStateIfMounted(() => {
+        return {
+          allowReactions: allowReactions,
+        };
+      });
+    };
+
+    const reactDelay = game.study.advancedSettings.reactDelaySeconds;
+    if (reactDelay <= 0) {
+      setAllowReactions(true);
+      return;
+    }
+
+    setAllowReactions(false);
+    this.reactDelayTimeoutID = setTimeout(() => {
+      setAllowReactions(true);
+    }, 1000 * reactDelay);
+  }
+
+  componentDidMount() {
+    super.componentDidMount();
+    this.scrollTracker.start();
+    if (this.scrollToNextPostAfterNextUpdate) {
+      const postIndex = this.scrollToNextPostAfterNextUpdate;
+      this.scrollToNextPostAfterNextUpdate = null;
+      window.requestAnimationFrame(() =>
+        this.scrollToNextPost(false, postIndex)
+      );
+    }
+  }
+
+  componentDidUpdate() {
+    if (this.scrollToNextPostAfterNextUpdate) {
+      const postIndex = this.scrollToNextPostAfterNextUpdate;
+      this.scrollToNextPostAfterNextUpdate = null;
+      window.requestAnimationFrame(() =>
+        this.scrollToNextPost(false, postIndex)
+      );
+    }
+  }
+
+  componentWillUnmount() {
+    super.componentWillUnmount();
+    this.scrollTracker.stop();
+    this.dynamicFeedbackFollowers.cancel();
+    this.dynamicFeedbackCredibility.cancel();
+    if (this.changeTimeoutID) {
+      clearTimeout(this.changeTimeoutID);
+      this.changeTimeoutID = null;
+    }
+    this.cancelReactDelay();
+  }
+
+  ////////////////a.h.s change: added the following function to save the state of the game
+  onShareTargetSelect(postIndex, target) {
+    this.setState((state) => {
+      const inters = state.interactions;
+      return {
+        interactions: inters.update(
+          postIndex,
+          inters.get(postIndex).withShareTargets(target)
+        ),
+      };
+    });
+  }
+  ////////////////////////ahs change end
+
+  onPromptContinue(study) {
+    this.setState((prevState) => {
+      return {
+        ...prevState,
+        dismissedPrompt: true,
+      };
+    });
+
+    if (!study.uiSettings.displayPostsInFeed) {
+      this.startReactDelay();
+    }
+  }
+
+  onPostReaction(postIndex, reaction, study) {
+    this.setState((state) => {
+      const inters = state.interactions;
+      return {
+        interactions: inters.update(
+          postIndex,
+          inters
+            .get(postIndex)
+            .withToggledPostReaction(
+              reaction,
+              study.uiSettings.allowMultipleReactions
+            )
+        ),
+      };
+    });
+  }
+
+  onCommentReaction(postIndex, commentIndex, reaction, study) {
+    this.setState((state) => {
+      const inters = state.interactions;
+      return {
+        interactions: inters.update(
+          postIndex,
+          inters
+            .get(postIndex)
+            .withToggledCommentReaction(
+              commentIndex,
+              reaction,
+              study.uiSettings.allowMultipleReactions
+            )
+        ),
+      };
+    });
+  }
+
+  onCommentSubmit(postIndex, comment) {
+    this.setState((state) => {
+      const inters = state.interactions;
+      return {
+        interactions: inters.update(
+          postIndex,
+          inters.get(postIndex).withComment(comment)
+        ),
+      };
+    });
+  }
+
+  onCommentEdit(postIndex) {
+    this.setState((state) => {
+      const inters = state.interactions;
+      return {
+        interactions: inters.update(
+          postIndex,
+          inters.get(postIndex).withComment(null)
+        ),
+      };
+    });
+  }
+
+  onCommentDelete(postIndex) {
+    this.setState((state) => {
+      const inters = state.interactions;
+      return {
+        interactions: inters.update(
+          postIndex,
+          inters.get(postIndex).withDeletedComment()
+        ),
+      };
+    });
+  }
+
+  onPostMove(lastLoc, newLoc) {
+    const postIndex = newLoc.postIndex;
+    if ((!lastLoc || !lastLoc.onScreen) && newLoc.onScreen) {
+      this.onPostScrolledOnScreen(postIndex);
+    } else if ((!lastLoc || lastLoc.onScreen) && !newLoc.onScreen) {
+      this.onPostScrolledOffScreen(postIndex);
+    }
+  }
+
+  onPostScrolledOnScreen(postIndex) {
+    this.setState((state) => {
+      const inters = state.interactions;
+      const postInters = inters.get(postIndex);
+      if (postInters.isCompleted()) return {};
+
+      return {
+        interactions: inters.update(postIndex, postInters.asVisible()),
+      };
+    });
+  }
+
+  onPostScrolledOffScreen(postIndex) {
+    this.submitPost(postIndex);
+
+    this.setState((state) => {
+      const inters = state.interactions;
+      const postInters = inters.get(postIndex);
+      if (postInters.isCompleted()) return {};
+
+      return {
+        interactions: inters.update(postIndex, postInters.asHidden()),
+      };
+    });
+  }
+
+  submitInteractionsToGame(game, inters) {
+    const beforeFollowers = Math.round(game.participant.followers);
+    const beforeCredibility = Math.round(game.participant.credibility);
+
+    game.submitInteractions(inters);
+
+    const afterFollowers = Math.round(game.participant.followers);
+    const afterCredibility = Math.round(game.participant.credibility);
+
+    const followerChange = afterFollowers - beforeFollowers || null;
+    const credibilityChange = afterCredibility - beforeCredibility || null;
+
+    if (followerChange) {
+      this.dynamicFeedbackFollowers.addFeedback(
+        beforeFollowers,
+        afterFollowers
+      );
+    }
+    if (credibilityChange) {
+      this.dynamicFeedbackCredibility.addFeedback(
+        beforeCredibility,
+        afterCredibility
+      );
+    }
+
+    this.setStateIfMounted(() => {
+      return {
+        followerChange: followerChange,
+        credibilityChange: credibilityChange,
+      };
+    });
+    if (this.changeTimeoutID) {
+      clearTimeout(this.changeTimeoutID);
+      this.changeTimeoutID = null;
+    }
+
+    const doStartReactDelay = !game.study.uiSettings.displayPostsInFeed;
+    if (followerChange || credibilityChange) {
+      this.changeTimeoutID = setTimeout(() => {
+        this.setStateIfMounted(() => {
+          return {
             followerChange: null,
             credibilityChange: null,
-        };
-        this.state = this.defaultState;
-        this.scrollTracker = new ScrollTracker(
-            this.getFeedDiv.bind(this),
-            this.onPostMove.bind(this)
+          };
+        });
+        if (doStartReactDelay) {
+          this.startReactDelay();
+        }
+      }, 1500);
+    } else if (doStartReactDelay) {
+      this.startReactDelay();
+    }
+  }
+
+  updateDynamicFeedbackFollowers(followers, finished) {
+    if (finished) {
+      this.setStateIfMounted(() => {
+        return { overrideFollowers: null };
+      });
+    } else {
+      this.setStateIfMounted(() => {
+        return { overrideFollowers: followers };
+      });
+    }
+  }
+
+  updateDynamicFeedbackCredibility(credibility, finished) {
+    if (finished) {
+      this.setStateIfMounted(() => {
+        return { overrideCredibility: null };
+      });
+    } else {
+      this.setStateIfMounted(() => {
+        return { overrideCredibility: credibility };
+      });
+    }
+  }
+
+  submitPost(postIndex) {
+    const game = this.state.game;
+    if (!game) throw new Error("There is no active game");
+
+    const inters = this.state.interactions;
+    const postInters = inters.get(postIndex);
+
+    if (postInters.isCompleted() || postInters.isEmpty()) return {};
+
+    const newInters = inters.update(postIndex, postInters.complete());
+
+    this.submitInteractionsToGame(game, newInters);
+
+    this.setState(() => {
+      return { interactions: newInters };
+    });
+  }
+
+  /**
+   * Submits all posts up to and including maxPostIndex.
+   */
+  static completeAllPostInteractions(inters, maxPostIndex) {
+    for (let index = 0; index <= maxPostIndex; ++index) {
+      const previousPostInters = inters.get(index);
+      if (!previousPostInters.isCompleted()) {
+        inters = inters.update(index, previousPostInters.complete());
+      }
+    }
+    return inters;
+  }
+
+  submitAll() {
+    const game = this.state.game;
+    if (!game) throw new Error("There is no active game");
+
+    const inters = this.state.interactions;
+    const postCount = game.study.basicSettings.length;
+    const newInters = GameScreen.completeAllPostInteractions(
+      inters,
+      postCount - 1
+    );
+    this.submitInteractionsToGame(game, newInters);
+
+    this.setState(() => {
+      return { interactions: newInters };
+    });
+  }
+
+  getCurrentPostIndex() {
+    const interactions = this.state.interactions;
+    if (!interactions) return;
+
+    return interactions.getCurrentPostIndex();
+  }
+
+  onNextPost() {
+    const game = this.state.game;
+    if (!game) throw new Error("There is no active game!");
+
+    // Search by submitted posts.
+    const study = game.study;
+    let currentPostIndex = this.getCurrentPostIndex();
+    if (currentPostIndex >= study.basicSettings.length) return;
+
+    if (study.uiSettings.displayPostsInFeed) {
+      this.scrollToNextPost(true);
+    } else {
+      this.submitPost(currentPostIndex);
+    }
+  }
+
+  scrollToNextPost(smoothScroll, postIndex) {
+    this.scrollTracker.detect();
+
+    if (postIndex === undefined) {
+      // Search visually for the next post.
+      let nextPostIndex = 0;
+      let nextPostBBox;
+      do {
+        nextPostBBox = this.scrollTracker.get(nextPostIndex);
+        if (!nextPostBBox) return;
+        if (nextPostBBox.y > 80) break;
+
+        nextPostIndex += 1;
+      } while (true);
+
+      postIndex = nextPostIndex;
+
+      // Preemptively submit the post we will scroll past.
+      const postToSubmit = postIndex - 1;
+      if (postToSubmit >= 0) {
+        this.onPostScrolledOffScreen(postToSubmit);
+      }
+    }
+
+    // Get the post to scroll it into view.
+    const nextPostElement = document.getElementById("post-" + postIndex);
+    if (!nextPostElement)
+      throw new Error(
+        "Unable to find the element for the next post (" + postIndex + ")"
+      );
+
+    nextPostElement.scrollIntoView({
+      behavior: smoothScroll ? "smooth" : "auto",
+    });
+  }
+
+  getFeedDiv() {
+    return document.getElementById("post-feed");
+  }
+
+  renderWithStudyAndGame(study, game) {
+    let displayStates = game.states;
+
+    const participant = game.participant;
+    const displayPrompt = !this.state.dismissedPrompt;
+    const error = this.state.error;
+
+    const interactions = this.state.interactions;
+    const currentPostIndex = interactions.getSubmittedPostsCount();
+
+    const totalPosts = game.study.basicSettings.length;
+    const progressPercentage = Math.round(
+      (currentPostIndex / totalPosts) * 100
+    );
+
+    let nextPostEnabled = true;
+    let nextPostError = "";
+    let reactionsAllowed = this.state.allowReactions;
+    let displayGameEnd = game.isFinished();
+    if (!study.uiSettings.displayPostsInFeed) {
+      let displayPostIndex = currentPostIndex;
+      const pauseOnPost =
+        this.state.overrideFollowers !== null ||
+        this.state.overrideCredibility !== null ||
+        this.state.followerChange !== null ||
+        this.state.credibilityChange !== null;
+      if (pauseOnPost) {
+        reactionsAllowed = false;
+        displayGameEnd = false;
+        displayPostIndex -= 1;
+      }
+
+      if (displayPostIndex < displayStates.length) {
+        displayStates = [displayStates[displayPostIndex]];
+        const postInteraction = interactions.get(displayPostIndex);
+        const madePostReaction = postInteraction.postReactions.length > 0;
+        const madeUserComment = postInteraction.comment !== null;
+
+        nextPostEnabled = false;
+        if (study.basicSettings.requireReactions && !madePostReaction) {
+          nextPostError = "Please react to the post";
+        } else if (study.areUserCommentsRequired() && !madeUserComment) {
+          nextPostError = "Please comment on the post";
+        } else {
+          nextPostEnabled = true;
+        }
+      }
+    }
+
+    // Generate the post components.
+    const postComponents = [];
+    if (!error && !displayGameEnd) {
+      for (let index = 0; index < displayStates.length; ++index) {
+        const state = displayStates[index];
+        const interaction = interactions.get(state.indexInGame);
+        const postIndex = state.indexInGame,
+          postID = "post-" + state.indexInGame;
+
+        postComponents.push(
+          <PostComponent
+            id={postID}
+            key={postID}
+            state={state}
+            onPostReact={(r) => this.onPostReaction(postIndex, r, study)}
+            onCommentReact={(i, r) =>
+              this.onCommentReaction(postIndex, i, r, study)
+            }
+            onCommentSubmit={(value) => this.onCommentSubmit(postIndex, value)}
+            onCommentEdit={() => this.onCommentEdit(postIndex)}
+            onCommentDelete={() => this.onCommentDelete(postIndex)}
+            enabled={reactionsAllowed}
+            interactions={interaction}
+            className={
+              study.uiSettings.displayPostsInFeed ? "mt-6 scroll-mt-4" : ""
+            }
+            ////////////////a.h.s change: added the following props
+            onShareTargetSelect={(target) => this.onShareTargetSelect(postIndex, target)}
+          />
         );
-        this.scrollToNextPostAfterNextUpdate = null;
-
-        const dynamicFeedbackAnimateTime = 500;
-        this.dynamicFeedbackFollowers = new DynamicFeedbackController(
-            dynamicFeedbackAnimateTime, this.updateDynamicFeedbackFollowers.bind(this)
-        );
-        this.dynamicFeedbackCredibility = new DynamicFeedbackController(
-            dynamicFeedbackAnimateTime, this.updateDynamicFeedbackCredibility.bind(this)
-        );
-
-        this.changeTimeoutID = null;
-        this.reactDelayTimeoutID = null;
+      }
     }
 
-    afterGameLoaded(game) {
-        super.afterGameLoaded(game);
+    return (
+      <>
+        {displayPrompt && (
+          <GamePrompt
+            study={study}
+            onClick={(enabled) => {
+              if (enabled) {
+                this.onPromptContinue(study);
+              }
+            }}
+          />
+        )}
 
-        const inters = game.participant.postInteractions;
-        this.setStateIfMounted(() => {
-            this.scrollToNextPostAfterNextUpdate = inters.getCurrentPostIndex();
-            return {
-                interactions: inters.copy(),
-                dismissedPrompt: game.isFinished()
-            };
-        });
-    }
-
-    cancelReactDelay() {
-        if (this.reactDelayTimeoutID !== null) {
-            clearTimeout(this.reactDelayTimeoutID);
-            this.reactDelayTimeoutID = null;
-        }
-    }
-
-    startReactDelay(game) {
-        this.cancelReactDelay();
-
-        if (!game) {
-            game = this.state.game;
-            if (!game)
-                throw new Error("There is no active game!");
-        }
-
-        const setAllowReactions = (allowReactions) => {
-            this.setStateIfMounted(() => {
-                return {
-                    allowReactions: allowReactions,
-                };
-            });
-        };
-
-        const reactDelay = game.study.advancedSettings.reactDelaySeconds;
-        if (reactDelay <= 0) {
-            setAllowReactions(true);
-            return;
-        }
-
-        setAllowReactions(false);
-        this.reactDelayTimeoutID = setTimeout(() => {
-            setAllowReactions(true);
-        }, 1000 * reactDelay);
-    }
-
-    componentDidMount() {
-        super.componentDidMount();
-        this.scrollTracker.start();
-        if (this.scrollToNextPostAfterNextUpdate) {
-            const postIndex = this.scrollToNextPostAfterNextUpdate;
-            this.scrollToNextPostAfterNextUpdate = null;
-            window.requestAnimationFrame(() => this.scrollToNextPost(false, postIndex));
-        }
-    }
-
-    componentDidUpdate() {
-        if (this.scrollToNextPostAfterNextUpdate) {
-            const postIndex = this.scrollToNextPostAfterNextUpdate;
-            this.scrollToNextPostAfterNextUpdate = null;
-            window.requestAnimationFrame(() => this.scrollToNextPost(false, postIndex));
-        }
-    }
-
-    componentWillUnmount() {
-        super.componentWillUnmount();
-        this.scrollTracker.stop();
-        this.dynamicFeedbackFollowers.cancel();
-        this.dynamicFeedbackCredibility.cancel();
-        if (this.changeTimeoutID) {
-            clearTimeout(this.changeTimeoutID);
-            this.changeTimeoutID = null;
-        }
-        this.cancelReactDelay();
-    }
-
-    onPromptContinue(study) {
-        this.setState((prevState) => {
-            return {
-                ...prevState,
-                dismissedPrompt: true
-            };
-        });
-
-        if (!study.uiSettings.displayPostsInFeed) {
-            this.startReactDelay();
-        }
-    }
-
-    onPostReaction(postIndex, reaction, study) {
-        this.setState((state) => {
-            const inters = state.interactions;
-            return {
-                interactions: inters.update(postIndex, inters.get(postIndex).withToggledPostReaction(
-                    reaction, study.uiSettings.allowMultipleReactions
-                ))
-            };
-        });
-    }
-
-    onCommentReaction(postIndex, commentIndex, reaction, study) {
-        this.setState((state) => {
-            const inters = state.interactions;
-            return {
-                interactions: inters.update(postIndex, inters.get(postIndex).withToggledCommentReaction(
-                    commentIndex, reaction, study.uiSettings.allowMultipleReactions
-                ))
-            };
-        });
-    }
-
-    onCommentSubmit(postIndex, comment) {
-        this.setState((state) => {
-            const inters = state.interactions;
-            return {
-                interactions: inters.update(postIndex, inters.get(postIndex).withComment(comment))
-            };
-        });
-    }
-
-    onCommentEdit(postIndex) {
-        this.setState((state) => {
-            const inters = state.interactions;
-            return {
-                interactions: inters.update(postIndex, inters.get(postIndex).withComment(null))
-            };
-        });
-    }
-
-    onCommentDelete(postIndex) {
-        this.setState((state) => {
-            const inters = state.interactions;
-            return {
-                interactions: inters.update(postIndex, inters.get(postIndex).withDeletedComment())
-            };
-        });
-    }
-
-    onPostMove(lastLoc, newLoc) {
-        const postIndex = newLoc.postIndex;
-        if ((!lastLoc || !lastLoc.onScreen) && newLoc.onScreen) {
-            this.onPostScrolledOnScreen(postIndex);
-        } else if ((!lastLoc || lastLoc.onScreen) && !newLoc.onScreen) {
-            this.onPostScrolledOffScreen(postIndex);
-        }
-    }
-
-    onPostScrolledOnScreen(postIndex) {
-        this.setState((state) => {
-            const inters = state.interactions;
-            const postInters = inters.get(postIndex);
-            if (postInters.isCompleted())
-                return {};
-
-            return {
-                interactions: inters.update(postIndex, postInters.asVisible())
-            };
-        });
-    }
-
-    onPostScrolledOffScreen(postIndex) {
-        this.submitPost(postIndex);
-
-        this.setState((state) => {
-            const inters = state.interactions;
-            const postInters = inters.get(postIndex);
-            if (postInters.isCompleted())
-                return {};
-
-            return {
-                interactions: inters.update(postIndex, postInters.asHidden())
-            };
-        });
-    }
-
-    submitInteractionsToGame(game, inters) {
-        const beforeFollowers = Math.round(game.participant.followers);
-        const beforeCredibility = Math.round(game.participant.credibility);
-
-        game.submitInteractions(inters);
-
-        const afterFollowers = Math.round(game.participant.followers);
-        const afterCredibility = Math.round(game.participant.credibility);
-
-        const followerChange = (afterFollowers - beforeFollowers) || null;
-        const credibilityChange = (afterCredibility - beforeCredibility) || null;
-
-        if (followerChange) {
-            this.dynamicFeedbackFollowers.addFeedback(beforeFollowers, afterFollowers);
-        }
-        if (credibilityChange) {
-            this.dynamicFeedbackCredibility.addFeedback(beforeCredibility, afterCredibility);
-        }
-
-        this.setStateIfMounted(() => {
-            return {
-                followerChange: followerChange,
-                credibilityChange: credibilityChange
-            };
-        });
-        if (this.changeTimeoutID) {
-            clearTimeout(this.changeTimeoutID);
-            this.changeTimeoutID = null;
-        }
-
-        const doStartReactDelay = !game.study.uiSettings.displayPostsInFeed;
-        if (followerChange || credibilityChange) {
-            this.changeTimeoutID = setTimeout(() => {
-                this.setStateIfMounted(() => {
-                    return {
-                        followerChange: null,
-                        credibilityChange: null
-                    };
-                });
-                if (doStartReactDelay) {
-                    this.startReactDelay();
+        <div
+          className={
+            "flex flex-row items-start w-full bg-gray-100 " +
+            (displayPrompt ? " filter blur " : "")
+          }
+          style={{ minHeight: "100vh" }}
+        >
+          {/* Space to the left. */}
+          <div className="flex-1" />
+          {/* Progress. */}
+          {/* ///a.h.s change 2 */}
+          {participant && !error && (
+            <ParticipantProgress
+              displayFollowers={study.uiSettings.displayFollowers}
+              displayCredibility={study.uiSettings.displayCredibility}
+              displayProgress={study.uiSettings.displayProgress}
+              fancyPositioning={true}
+              participant={participant}
+              overrideFollowers={this.state.overrideFollowers}
+              overrideCredibility={this.state.overrideCredibility}
+              nextPostEnabled={nextPostEnabled && reactionsAllowed}
+              progressPercentage={progressPercentage}
+              onNextPost={() => {
+                if (nextPostEnabled && reactionsAllowed) {
+                  this.onNextPost();
                 }
-            }, 1500);
+              }}
+              nextPostText={
+                displayGameEnd
+                  ? "The simulation is complete!"
+                  : !nextPostEnabled
+                  ? nextPostError
+                  : !reactionsAllowed
+                  ? "Please wait to continue"
+                  : study.uiSettings.displayPostsInFeed
+                  ? "Scroll to next post"
+                  : "Continue to next post"
+              }
+              followerChange={this.state.followerChange}
+              credibilityChange={this.state.credibilityChange}
+            />
+          )}
+          {/* Space in the middle. */}
+          <div className="flex-1 max-w-mini" />
+          {/* The posts and their associated comments. */}
+          <div
+            id="post-feed"
+            className="relative bg-gray-200 w-full md:max-w-xl
+                                    md:border-l-2 md:border-r-2 md:border-gray-700 shadow-2xl"
+            style={{ minHeight: "100vh" }}
+          >
+            {/* Post, reactions, and comments. */}
+            {postComponents}
 
-        } else if (doStartReactDelay) {
-            this.startReactDelay();
-        }
-    }
-
-    updateDynamicFeedbackFollowers(followers, finished) {
-        if (finished) {
-            this.setStateIfMounted(() => {
-                return {overrideFollowers: null};
-            });
-        } else {
-            this.setStateIfMounted(() => {
-                return {overrideFollowers: followers};
-            });
-        }
-    }
-
-    updateDynamicFeedbackCredibility(credibility, finished) {
-        if (finished) {
-            this.setStateIfMounted(() => {
-                return {overrideCredibility: null};
-            });
-        } else {
-            this.setStateIfMounted(() => {
-                return {overrideCredibility: credibility};
-            });
-        }
-    }
-
-    submitPost(postIndex) {
-        const game = this.state.game;
-        if (!game)
-            throw new Error("There is no active game");
-
-        const inters = this.state.interactions;
-        const postInters = inters.get(postIndex);
-
-        if (postInters.isCompleted() || postInters.isEmpty())
-            return {};
-
-        const newInters = inters.update(postIndex, postInters.complete());
-        this.submitInteractionsToGame(game, newInters);
-
-        this.setState(() => {
-            return {interactions: newInters};
-        });
-    }
-
-    /**
-     * Submits all posts up to and including maxPostIndex.
-     */
-    static completeAllPostInteractions(inters, maxPostIndex) {
-        for (let index = 0; index <= maxPostIndex; ++index) {
-            const previousPostInters = inters.get(index);
-            if (!previousPostInters.isCompleted()) {
-                inters = inters.update(index, previousPostInters.complete());
-            }
-        }
-        return inters;
-    }
-
-    submitAll() {
-        const game = this.state.game;
-        if (!game)
-            throw new Error("There is no active game");
-
-        const inters = this.state.interactions;
-        const postCount = game.study.basicSettings.length;
-        const newInters = GameScreen.completeAllPostInteractions(inters, postCount - 1);
-        this.submitInteractionsToGame(game, newInters);
-
-        this.setState(() => {
-            return {interactions: newInters};
-        });
-    }
-
-    getCurrentPostIndex() {
-        const interactions = this.state.interactions;
-        if (!interactions)
-            return;
-
-        return interactions.getCurrentPostIndex();
-    }
-
-    onNextPost() {
-        const game = this.state.game;
-        if (!game)
-            throw new Error("There is no active game!");
-
-        // Search by submitted posts.
-        const study = game.study;
-        let currentPostIndex = this.getCurrentPostIndex();
-        if (currentPostIndex >= study.basicSettings.length)
-            return;
-
-        if (study.uiSettings.displayPostsInFeed) {
-            this.scrollToNextPost(true);
-        } else {
-            this.submitPost(currentPostIndex);
-        }
-    }
-
-    scrollToNextPost(smoothScroll, postIndex) {
-        this.scrollTracker.detect();
-
-        if (postIndex === undefined) {
-            // Search visually for the next post.
-            let nextPostIndex = 0;
-            let nextPostBBox;
-            do {
-                nextPostBBox = this.scrollTracker.get(nextPostIndex);
-                if (!nextPostBBox)
-                    return;
-                if (nextPostBBox.y > 80)
-                    break;
-
-                nextPostIndex += 1;
-            } while (true);
-
-            postIndex = nextPostIndex;
-
-            // Preemptively submit the post we will scroll past.
-            const postToSubmit = postIndex - 1;
-            if (postToSubmit >= 0) {
-                this.onPostScrolledOffScreen(postToSubmit);
-            }
-        }
-
-        // Get the post to scroll it into view.
-        const nextPostElement = document.getElementById("post-" + postIndex);
-        if (!nextPostElement)
-            throw new Error("Unable to find the element for the next post (" + postIndex + ")");
-
-        nextPostElement.scrollIntoView({
-            behavior: (smoothScroll ? "smooth" : "auto")
-        });
-    }
-
-    getFeedDiv() {
-        return document.getElementById("post-feed");
-    }
-
-    renderWithStudyAndGame(study, game) {
-        let displayStates = game.states;
-
-        const participant = game.participant;
-        const displayPrompt = !this.state.dismissedPrompt;
-        const error = this.state.error;
-
-        const interactions = this.state.interactions;
-        const currentPostIndex = interactions.getSubmittedPostsCount();
-
-        const totalPosts = game.study.basicSettings.length;
-        const progressPercentage = Math.round(currentPostIndex / totalPosts * 100);
-
-        let nextPostEnabled = true;
-        let nextPostError = "";
-        let reactionsAllowed = this.state.allowReactions;
-        let displayGameEnd = game.isFinished();
-        if (!study.uiSettings.displayPostsInFeed) {
-            let displayPostIndex = currentPostIndex;
-            const pauseOnPost = (
-                this.state.overrideFollowers !== null ||
-                this.state.overrideCredibility !== null ||
-                this.state.followerChange !== null ||
-                this.state.credibilityChange !== null
-            );
-            if (pauseOnPost) {
-                reactionsAllowed = false;
-                displayGameEnd = false;
-                displayPostIndex -= 1;
-            }
-
-            if (displayPostIndex < displayStates.length) {
-                displayStates = [displayStates[displayPostIndex]];
-                const postInteraction = interactions.get(displayPostIndex)
-                const madePostReaction = (postInteraction.postReactions.length > 0);
-                const madeUserComment = (postInteraction.comment !== null);
-
-                nextPostEnabled = false;
-                if (study.basicSettings.requireReactions && !madePostReaction) {
-                    nextPostError = "Please react to the post";
-                } else if (study.areUserCommentsRequired() && !madeUserComment) {
-                    nextPostError = "Please comment on the post";
-                } else {
-                    nextPostEnabled = true;
-                }
-            }
-        }
-
-        // Generate the post components.
-        const postComponents = [];
-        if (!error && !displayGameEnd) {
-            for (let index = 0; index < displayStates.length; ++index) {
-                const state = displayStates[index];
-                const interaction = interactions.get(state.indexInGame);
-                const postIndex = state.indexInGame,
-                      postID = "post-" + state.indexInGame;
-
-                postComponents.push(
-                    <PostComponent
-                        id={postID}
-                        key={postID}
-                        state={state}
-                        onPostReact={r => this.onPostReaction(postIndex, r, study)}
-                        onCommentReact={(i, r) => this.onCommentReaction(postIndex, i, r, study)}
-                        onCommentSubmit={value => this.onCommentSubmit(postIndex, value)}
-                        onCommentEdit={() => this.onCommentEdit(postIndex)}
-                        onCommentDelete={() => this.onCommentDelete(postIndex)}
-                        enabled={reactionsAllowed}
-                        interactions={interaction}
-                        className={(study.uiSettings.displayPostsInFeed ? "mt-6 scroll-mt-4" : "")}/>
-                );
-            }
-        }
-
-        return (
-          <>
-            {displayPrompt && (
-              <GamePrompt
-                study={study}
-                onClick={(enabled) => {
-                  if (enabled) {
-                    this.onPromptContinue(study);
-                  }
-                }}
-              />
+            {/* The end of the feed. */}
+            {!displayGameEnd && study.uiSettings.displayPostsInFeed && (
+              <FeedEnd onContinue={() => this.submitAll(game)} />
             )}
 
-            <div
-              className={
-                "flex flex-row items-start w-full bg-gray-100 " +
-                (displayPrompt ? " filter blur " : "")
-              }
-              style={{ minHeight: "100vh" }}
-            >
-              {/* Space to the left. */}
-              <div className="flex-1" />
-              {/* Progress. */}
-              {/* ///a.h.s change 2 */}
-              {participant && !error &&
-                        <ParticipantProgress
-                            displayFollowers={study.uiSettings.displayFollowers}
-                            displayCredibility={study.uiSettings.displayCredibility}
-                            displayProgress = {study.uiSettings.displayProgress}
-                            fancyPositioning={true}
-                            participant={participant}
-                            overrideFollowers={this.state.overrideFollowers}
-                            overrideCredibility={this.state.overrideCredibility}
-                            nextPostEnabled={nextPostEnabled && reactionsAllowed}
-                            progressPercentage = {progressPercentage}
-                            onNextPost={() => {
-                                if (nextPostEnabled && reactionsAllowed) {
-                                    this.onNextPost();
-                                }
-                            }}
-                            nextPostText={
-                                displayGameEnd ?
-                                    "The simulation is complete!" :
-                                (!nextPostEnabled ?
-                                    nextPostError :
-                                (!reactionsAllowed ?
-                                    "Please wait to continue" :
-                                (study.uiSettings.displayPostsInFeed ?
-                                    "Scroll to next post" :
-                                    "Continue to next post")))
-                            }
-                            followerChange={this.state.followerChange}
-                            credibilityChange={this.state.credibilityChange}/>}
-              {/* Space in the middle. */}
-              <div className="flex-1 max-w-mini" />
-              {/* The posts and their associated comments. */}
-              <div
-                id="post-feed"
-                className="relative bg-gray-200 w-full md:max-w-xl
-                                    md:border-l-2 md:border-r-2 md:border-gray-700 shadow-2xl"
-                style={{ minHeight: "100vh" }}
-              >
-                {/* Post, reactions, and comments. */}
-                {postComponents}
+            {/* If the game is finished, display a game completed prompt. */}
+            {displayGameEnd && <GameFinished study={study} game={game} />}
 
-                {/* The end of the feed. */}
-                {!displayGameEnd && study.uiSettings.displayPostsInFeed && (
-                  <FeedEnd onContinue={() => this.submitAll(game)} />
-                )}
+            {/* If there is an error, display it here. */}
+            {error && <ErrorLabel value={error} />}
 
-                {/* If the game is finished, display a game completed prompt. */}
-                {displayGameEnd && <GameFinished study={study} game={game} />}
-
-                {/* If there is an error, display it here. */}
-                {error && <ErrorLabel value={error} />}
-
-                {/* Used for reserving space below reactions and progress. */}
-                <div className="h-56 md:h-8" />
-              </div>
-              {/* Space to the right. */}
-              <div className="flex-1" />
-              <div className="flex-1" />
-            </div>
-          </>
-        );
-    }
+            {/* Used for reserving space below reactions and progress. */}
+            <div className="h-56 md:h-8" />
+          </div>
+          {/* Space to the right. */}
+          <div className="flex-1" />
+          <div className="flex-1" />
+        </div>
+      </>
+    );
+  }
 }

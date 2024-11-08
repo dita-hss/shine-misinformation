@@ -318,243 +318,338 @@ export class GameCommentInteraction {
  * Stores all the interactions of a participant with a post.
  */
 export class GamePostInteraction {
-    postReactions; // String[]
-    commentReactions; // GameCommentInteraction[]
-    lastComment; // String?
-    comment; // String?
-    timer; // InteractionTimer
+  postReactions; // String[]
+  commentReactions; // GameCommentInteraction[]
+  lastComment; // String?
+  comment; // String?
+  timer; // InteractionTimer
 
-    constructor(postReactions, commentReactions, lastComment, comment, timer) {
-        doArrayTypeCheck(postReactions, "string", "Reactions to Post");
-        doArrayTypeCheck(commentReactions, GameCommentInteraction, "Reactions to Comments");
-        doNullableTypeCheck(lastComment, "string", "Participant's Last Comment");
-        doNullableTypeCheck(comment, "string", "Participant's Comment");
-        doNullableTypeCheck(timer, InteractionTimer, "Post Reaction Timer");
-        this.postReactions = postReactions;
-        this.commentReactions = commentReactions;
-        this.lastComment = lastComment;
-        this.comment = comment;
-        this.timer = timer;
+  ///a.h.s change: keep track of who the post was shared with
+  shareTargets; // String? - New property to store who the post was shared with
+  //////////////////////ahs change end
+
+  /////////////////////a.h.s single change: added shareTargets to constructor
+  constructor(postReactions, commentReactions, lastComment, comment, timer, shareTargets) {
+    doArrayTypeCheck(postReactions, "string", "Reactions to Post");
+    doArrayTypeCheck(
+      commentReactions,
+      GameCommentInteraction,
+      "Reactions to Comments"
+    );
+    doNullableTypeCheck(lastComment, "string", "Participant's Last Comment");
+    doNullableTypeCheck(comment, "string", "Participant's Comment");
+    doNullableTypeCheck(timer, InteractionTimer, "Post Reaction Timer");
+
+    //////////////////////a.h.s change: keep track of who the post was shared with
+
+    ////error prone: if error there is a typeError where shareTargets is an empty array instead of a string
+    ///// commenting out the doNUllableTypeCheck will fix it
+    //// not sure where it is getting assigned an empty array in the first place
+    doNullableTypeCheck(shareTargets, "string", "Share Target"); // Type check for share targets
+    this.shareTargets = shareTargets;
+    //////////////////////ahs change end
+
+    this.postReactions = postReactions;
+    this.commentReactions = commentReactions;
+    this.lastComment = lastComment;
+    this.comment = comment;
+    this.timer = timer;
+  }
+
+  static empty() {
+    return new GamePostInteraction(
+      [],
+      [],
+      null,
+      null,
+      InteractionTimer.empty(),
+      //////////////////////a.h.s single change: added shareTargets return
+      null // Initialize share targets
+
+    );
+  }
+
+  isEmpty() {
+    return (
+      this.postReactions.length === 0 &&
+      this.commentReactions.length === 0 &&
+      this.comment === null
+    );
+  }
+
+  isEditingComment() {
+    return this.lastComment !== null;
+  }
+
+  isCompleted() {
+    return this.timer.isCompleted();
+  }
+
+  complete() {
+    const completedCommentReactions = [];
+    for (let index = 0; index < this.commentReactions.length; ++index) {
+      completedCommentReactions.push(this.commentReactions[index].complete());
+    }
+    return new GamePostInteraction(
+      this.postReactions,
+      completedCommentReactions,
+      this.lastComment,
+      this.comment,
+      this.timer.complete(),
+      //////////////////////a.h.s single change: added shareTargets to complete
+      this.shareTargets
+    );
+  }
+
+  asVisible() {
+    const updatedCommentReactions = [];
+    for (let index = 0; index < this.commentReactions.length; ++index) {
+      updatedCommentReactions.push(this.commentReactions[index].asVisible());
+    }
+    return new GamePostInteraction(
+      this.postReactions,
+      updatedCommentReactions,
+      this.lastComment,
+      this.comment,
+      this.timer.asVisible(),
+      //////////////////////a.h.s single change: added shareTargets to asVisible
+      this.shareTargets
+    );
+  }
+
+  asHidden() {
+    const updatedCommentReactions = [];
+    for (let index = 0; index < this.commentReactions.length; ++index) {
+      updatedCommentReactions.push(this.commentReactions[index].asHidden());
+    }
+    return new GamePostInteraction(
+      this.postReactions,
+      updatedCommentReactions,
+      this.lastComment,
+      this.comment,
+      this.timer.asHidden(),
+      //////////////////////a.h.s single change: added shareTargets to asHidden
+      this.shareTargets
+    
+
+    );
+  }
+
+  /////a.h.s change: keep track of who the post was shared with
+  withShareTargets(shareTargets) {
+    
+    doNullableTypeCheck(shareTargets, "string", "Share Target");
+    return new GamePostInteraction(
+      this.postReactions,
+      this.commentReactions,
+      this.lastComment,
+      this.comment,
+      this.timer.withNewInteraction(),
+      shareTargets 
+    );
+  }
+  //////////////////////ahs change end
+
+  withComment(comment) {
+    let lastComment;
+    if (comment) {
+      lastComment = comment;
+    } else if (this.comment) {
+      lastComment = this.comment;
+    } else {
+      lastComment = this.lastComment;
+    }
+    return new GamePostInteraction(
+      this.postReactions,
+      this.commentReactions,
+      lastComment,
+      comment,
+      this.timer.withNewInteraction(),
+      //////////////////////a.h.s single change: added shareTargets to withComment
+      this.shareTargets
+    );
+  }
+
+  withDeletedComment() {
+    return new GamePostInteraction(
+      this.postReactions,
+      this.commentReactions,
+      null,
+      null,
+      this.timer.withNewInteraction(),
+      //////////////////////a.h.s single change: added shareTargets to withDeletedComment
+      this.shareTargets
+    );
+  }
+
+  withToggledPostReaction(postReaction, allowMultipleReactions) {
+    return this.withPostReactions(
+      toggleReactionPresenceInArray(
+        this.postReactions,
+        postReaction,
+        allowMultipleReactions
+      )
+    );
+  }
+
+  hasPostReaction(postReaction) {
+    return detectReactionPresenceInArray(this.postReactions, postReaction);
+  }
+
+  withPostReactions(postReactions) {
+    return new GamePostInteraction(
+      postReactions,
+      this.commentReactions,
+      this.lastComment,
+      this.comment,
+      this.timer.withNewInteraction(),
+      //////////////////////a.h.s single change: added shareTargets to withPostReactions
+      this.shareTargets
+    );
+  }
+
+  withToggledCommentReaction(
+    commentIndex,
+    commentReaction,
+    allowMultipleReactions
+  ) {
+    doTypeCheck(commentReaction, "string", "Comment Reaction");
+
+    const existing = this.findCommentReaction(commentIndex);
+    if (existing === null) {
+      // First time interacting with the comment.
+      return this.withCommentReaction(
+        commentIndex,
+        GameCommentInteraction.create(commentIndex, commentReaction, this.timer)
+      );
+    } else {
+      // New interaction with a comment that had previous interactions.
+      return this.withCommentReaction(
+        commentIndex,
+        existing.withToggledReaction(commentReaction, allowMultipleReactions)
+      );
+    }
+  }
+
+  withCommentReaction(commentIndex, commentReaction) {
+    doNullableTypeCheck(
+      commentReaction,
+      GameCommentInteraction,
+      "Comment Reaction"
+    );
+
+    const commentReactions = [];
+    for (let index = 0; index < this.commentReactions.length; ++index) {
+      const existingCommentReaction = this.commentReactions[index];
+      if (existingCommentReaction.commentIndex !== commentIndex) {
+        commentReactions.push(existingCommentReaction);
+      }
+    }
+    if (commentReaction !== null) {
+      commentReactions.push(commentReaction);
     }
 
-    static empty() {
-        return new GamePostInteraction([], [], null, null, InteractionTimer.empty());
-    }
+    return new GamePostInteraction(
+      this.postReactions,
+      commentReactions,
+      this.lastComment,
+      this.comment,
+      this.timer.withNewInteraction(),
+      //////////////////////a.h.s single change: added shareTargets to withCommentReaction
+      this.shareTargets
+    );
+  }
 
-    isEmpty() {
-        return this.postReactions.length === 0 &&
-            this.commentReactions.length === 0 &&
-            this.comment === null;
+  findCommentReaction(commentIndex) {
+    doTypeCheck(commentIndex, "number", "Comment ID");
+    for (let index = 0; index < this.commentReactions.length; ++index) {
+      const commentReaction = this.commentReactions[index];
+      if (commentReaction.commentIndex === commentIndex) return commentReaction;
     }
+    return null;
+  }
 
-    isEditingComment() {
-        return this.lastComment !== null;
+  static commentReactionsToJSON(commentReactions) {
+    const json = [];
+    for (let index = 0; index < commentReactions.length; ++index) {
+      json.push(commentReactions[index].toJSON());
     }
+    return json;
+  }
 
-    isCompleted() {
-        return this.timer.isCompleted();
+  static commentReactionsFromJSON(json) {
+    const commentReactions = [];
+    for (let index = 0; index < json.length; ++index) {
+      commentReactions.push(GameCommentInteraction.fromJSON(json[index]));
     }
+    return commentReactions;
+  }
 
-    complete() {
-        const completedCommentReactions = [];
-        for (let index = 0; index < this.commentReactions.length; ++index) {
-            completedCommentReactions.push(this.commentReactions[index].complete())
-        }
-        return new GamePostInteraction(
-            this.postReactions,
-            completedCommentReactions,
-            this.lastComment,
-            this.comment,
-            this.timer.complete()
+  toJSON() {
+    return {
+      postReactions: this.postReactions,
+      commentReactions: GamePostInteraction.commentReactionsToJSON(
+        this.commentReactions
+      ),
+      comment: this.comment,
+      timer: this.timer.toJSON(),
+
+      //////////////////////a.h.s single change: added shareTargets to JSON
+      shareTargets: this.shareTargets,
+    };
+  }
+
+  static fromJSON(json) {
+    const timerJSON = json["timer"];
+
+    let timer;
+    if (timerJSON !== undefined) {
+      timer = InteractionTimer.fromJSON(timerJSON);
+    } else {
+      const legacyPostShowTime = json["postShowTime"];
+      const legacyFirstInteractTimeMS = json["firstInteractTimeMS"];
+      const legacyLastInteractTimeMS = json["lastInteractTimeMS"];
+
+      if (legacyPostShowTime !== undefined) {
+        timer = new InteractionTimer(
+          legacyPostShowTime,
+          null,
+          null,
+          0,
+          legacyFirstInteractTimeMS
+            ? legacyPostShowTime + legacyFirstInteractTimeMS
+            : null,
+          legacyLastInteractTimeMS
+            ? legacyPostShowTime + legacyLastInteractTimeMS
+            : null
         );
+      } else {
+        timer = InteractionTimer.empty();
+      }
     }
 
-    asVisible() {
-        const updatedCommentReactions = [];
-        for (let index = 0; index < this.commentReactions.length; ++index) {
-            updatedCommentReactions.push(this.commentReactions[index].asVisible())
-        }
-        return new GamePostInteraction(
-            this.postReactions,
-            updatedCommentReactions,
-            this.lastComment,
-            this.comment,
-            this.timer.asVisible()
-        );
-    }
+    const postReactions = json["postReactions"];
+    const postReaction = json["postReaction"];
+    const comment = json["comment"];
+    //////////////////////a.h.s single change: added shareTargets to JSON
+    const shareTargets = json["shareTargets"]; 
+    //if share targets is an empty array , change it to string
 
-    asHidden() {
-        const updatedCommentReactions = [];
-        for (let index = 0; index < this.commentReactions.length; ++index) {
-            updatedCommentReactions.push(this.commentReactions[index].asHidden())
-        }
-        return new GamePostInteraction(
-            this.postReactions,
-            updatedCommentReactions,
-            this.lastComment,
-            this.comment,
-            this.timer.asHidden()
-        );
-    }
-
-    withComment(comment) {
-        let lastComment;
-        if (comment) {
-            lastComment = comment;
-        } else if (this.comment) {
-            lastComment = this.comment;
-        } else {
-            lastComment = this.lastComment;
-        }
-        return new GamePostInteraction(
-            this.postReactions,
-            this.commentReactions,
-            lastComment,
-            comment,
-            this.timer.withNewInteraction()
-        );
-    }
-
-    withDeletedComment() {
-        return new GamePostInteraction(
-            this.postReactions,
-            this.commentReactions,
-            null,
-            null,
-            this.timer.withNewInteraction()
-        );
-    }
-
-    withToggledPostReaction(postReaction, allowMultipleReactions) {
-        return this.withPostReactions(toggleReactionPresenceInArray(
-            this.postReactions, postReaction, allowMultipleReactions
-        ));
-    }
-
-    hasPostReaction(postReaction) {
-        return detectReactionPresenceInArray(this.postReactions, postReaction);
-    }
-
-    withPostReactions(postReactions) {
-        return new GamePostInteraction(
-            postReactions,
-            this.commentReactions,
-            this.lastComment,
-            this.comment,
-            this.timer.withNewInteraction()
-        );
-    }
-
-    withToggledCommentReaction(commentIndex, commentReaction, allowMultipleReactions) {
-        doTypeCheck(commentReaction, "string", "Comment Reaction");
-
-        const existing = this.findCommentReaction(commentIndex);
-        if (existing === null) {
-            // First time interacting with the comment.
-            return this.withCommentReaction(commentIndex, GameCommentInteraction.create(
-                commentIndex, commentReaction, this.timer
-            ));
-        } else {
-            // New interaction with a comment that had previous interactions.
-            return this.withCommentReaction(commentIndex, existing.withToggledReaction(
-                commentReaction, allowMultipleReactions
-            ));
-        }
-    }
-
-    withCommentReaction(commentIndex, commentReaction) {
-        doNullableTypeCheck(commentReaction, GameCommentInteraction, "Comment Reaction");
-
-        const commentReactions = [];
-        for (let index = 0; index < this.commentReactions.length; ++index) {
-            const existingCommentReaction = this.commentReactions[index];
-            if (existingCommentReaction.commentIndex !== commentIndex) {
-                commentReactions.push(existingCommentReaction);
-            }
-        }
-        if (commentReaction !== null) {
-            commentReactions.push(commentReaction);
-        }
-
-        return new GamePostInteraction(
-            this.postReactions,
-            commentReactions,
-            this.lastComment,
-            this.comment,
-            this.timer.withNewInteraction()
-        );
-    }
-
-    findCommentReaction(commentIndex) {
-        doTypeCheck(commentIndex, "number", "Comment ID");
-        for (let index = 0; index < this.commentReactions.length; ++index) {
-            const commentReaction = this.commentReactions[index];
-            if (commentReaction.commentIndex === commentIndex)
-                return commentReaction;
-        }
-        return null;
-    }
-
-    static commentReactionsToJSON(commentReactions) {
-        const json = [];
-        for (let index = 0; index < commentReactions.length; ++index) {
-            json.push(commentReactions[index].toJSON());
-        }
-        return json;
-    }
-
-    static commentReactionsFromJSON(json) {
-        const commentReactions = [];
-        for (let index = 0; index < json.length; ++index) {
-            commentReactions.push(GameCommentInteraction.fromJSON(json[index]));
-        }
-        return commentReactions;
-    }
-
-    toJSON() {
-        return {
-            "postReactions": this.postReactions,
-            "commentReactions": GamePostInteraction.commentReactionsToJSON(this.commentReactions),
-            "comment": this.comment,
-            "timer": this.timer.toJSON()
-        };
-    }
-
-    static fromJSON(json) {
-        const timerJSON = json["timer"];
-
-        let timer;
-        if (timerJSON !== undefined) {
-            timer = InteractionTimer.fromJSON(timerJSON);
-        } else {
-            const legacyPostShowTime = json["postShowTime"];
-            const legacyFirstInteractTimeMS = json["firstInteractTimeMS"];
-            const legacyLastInteractTimeMS = json["lastInteractTimeMS"];
-
-            if (legacyPostShowTime !== undefined) {
-                timer = new InteractionTimer(
-                    legacyPostShowTime, null,
-                    null, 0,
-                    (legacyFirstInteractTimeMS ? legacyPostShowTime + legacyFirstInteractTimeMS : null),
-                    (legacyLastInteractTimeMS ? legacyPostShowTime + legacyLastInteractTimeMS : null)
-                );
-            } else {
-                timer = InteractionTimer.empty();
-            }
-        }
-
-        const postReactions = json["postReactions"];
-        const postReaction = json["postReaction"];
-        const comment = json["comment"];
-
-        return new GamePostInteraction(
-            (postReactions !== undefined ? postReactions : (postReaction ? [postReaction] : [])),
-            GamePostInteraction.commentReactionsFromJSON(json["commentReactions"]),
-            comment,
-            comment,
-            timer
-        );
-    }
+    return new GamePostInteraction(
+      postReactions !== undefined
+        ? postReactions
+        : postReaction
+        ? [postReaction]
+        : [],
+      GamePostInteraction.commentReactionsFromJSON(json["commentReactions"]),
+      comment,
+      comment,
+      timer,
+      //////////////////////a.h.s single change: added shareTargets to JSON
+      //check if shareTargets is an empty array if yes change it to string
+      shareTargets
+    );
+  }
 }
 
 /**

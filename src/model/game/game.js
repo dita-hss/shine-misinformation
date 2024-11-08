@@ -187,6 +187,10 @@ export class Game {
         if (!postInteraction.isCompleted())
             throw new Error("Interactions with posts must be completed to be submitted");
 
+        if (!postInteraction.shareTargets) {
+            postInteraction.shareTargets = "";
+        }
+
         // Calculate and apply the changes to participant's credibility and followers.
         const postReactions = postInteraction.postReactions;
         let credibilityChange = 0,
@@ -201,6 +205,15 @@ export class Game {
             credibilityChange += post.changesToCredibility[reaction].sample();
             followerChange += post.changesToFollowers[reaction].sample();
         }
+
+        // ///a.h.s change: trying to log the share targets
+        // if (postInteraction.shareTargets.length > 0) {
+        //   console.log(
+        //     `Post was shared with: ${postInteraction.shareTargets.join(", ")}`
+        //   );
+        // }
+        console.log(postInteraction);
+        ////////////////////////////ahs change end
         this.participant.addSubmittedPost(postIndex, postInteraction, credibilityChange, followerChange);
     }
 
