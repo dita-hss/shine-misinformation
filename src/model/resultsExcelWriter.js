@@ -105,6 +105,8 @@ function constructWorkbook(study, results, problems) {
         {header: "Post Shares", key: "postShares", width: 20, enabled: showPostShares},
         ///a.h.s change: adding the share target column to the excel file
         {header: "Share Targets", key: "shareTargets", width: 40, enabled: showPostShares},
+        {header: "Self Report", key: "selfReportResponses", width: 40, enabled: showPostShares},
+        //////////
         {header: "Post Flags", key: "postFlags", width: 20, enabled: showPostFlags},
 
         {header: "Liked Post", key: "likedPost", width: 20, enabled: showPostLikes},
@@ -137,7 +139,7 @@ function constructWorkbook(study, results, problems) {
             const shares = state.currentPost.numberOfReactions.share;
             const flags = state.currentPost.numberOfReactions.flag;
             const interaction = participant.postInteractions.get(stateIndex);
-            console.log(interaction.shareTargets);
+            //console.log(interaction.shareTargets);
             const beforeCredibility = Math.round(participant.credibilityHistory[stateIndex]);
             const afterCredibility = Math.round(participant.credibilityHistory[stateIndex + 1]);
             const beforeFollowers = Math.round(participant.followerHistory[stateIndex]);
@@ -170,6 +172,7 @@ function constructWorkbook(study, results, problems) {
                 
                 ///a.h.s change: adding the value of share target column to the excel file
                 shareTargets: interaction.shareTargets || "",
+                selfReportResponses: interaction.selfReportResponses || [],
 
 
                 dwellTime: numToCellValue(interaction.timer.getDwellTimeMS()),

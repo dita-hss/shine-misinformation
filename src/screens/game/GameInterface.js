@@ -11,6 +11,7 @@ import {PostComponent} from "./Post";
 import {GamePostInteractionStore} from "../../model/game/interactions";
 import {ScrollTracker} from "../../model/game/scrollTracker";
 import {DynamicFeedbackController} from "./dynamicFeedback";
+import SelfReport from "./SelfReport.js";
 
 
 // We want to ensure that we have smooth element scrollIntoView behaviour.
@@ -146,6 +147,7 @@ export class GameScreen extends ActiveGameScreen {
 
       error: null,
 
+      showSelfReport: false,
       allowReactions: true,
       interactions: GamePostInteractionStore.empty(),
       dismissedPrompt: false,
@@ -257,20 +259,6 @@ export class GameScreen extends ActiveGameScreen {
     }
     this.cancelReactDelay();
   }
-
-  ////////////////a.h.s change: added the following function to save the state of the game
-  onShareTargetSelect(postIndex, target) {
-    this.setState((state) => {
-      const inters = state.interactions;
-      return {
-        interactions: inters.update(
-          postIndex,
-          inters.get(postIndex).withShareTargets(target)
-        ),
-      };
-    });
-  }
-  ////////////////////////ahs change end
 
   onPromptContinue(study) {
     this.setState((prevState) => {
@@ -536,7 +524,12 @@ export class GameScreen extends ActiveGameScreen {
     if (study.uiSettings.displayPostsInFeed) {
       this.scrollToNextPost(true);
     } else {
-      this.submitPost(currentPostIndex);
+
+      this.setState(() => {
+        return { showSelfReport: true };
+      });
+      
+      ///this.submitPost(currentPostIndex);
     }
   }
 
@@ -580,7 +573,69 @@ export class GameScreen extends ActiveGameScreen {
     return document.getElementById("post-feed");
   }
 
+  // onSelfReportSubmit = () => {
+  //   this.setState({ showSelfReport: false }); // Hide SelfReport screen
+  //   this.onNextPost(); // Move to the next post
+  // };
+
+  ////////////////a.h.s change: added the following functions to save the state of the game
+  onSelfReportSubmit = (postIndex, responses) => {
+    //console.log("on the self report", responses);
+
+    // Update interactions and set showSelfReport to false, then call onNextPost
+    this.setState(
+      (state) => {
+        const inters = state.interactions;
+        return {
+          interactions: inters.update(
+            postIndex,
+            inters.get(postIndex).withSelfReportResponses(responses)
+          ),
+          showSelfReport: false, // Hide SelfReport screen
+          
+        };
+      },
+      () => {
+        //this.onNextPost();
+        const currentPostIndex = this.getCurrentPostIndex();
+        this.submitPost(currentPostIndex);
+      }
+    );
+  };
+
+  onShareTargetSelect(postIndex, target) {
+    this.setState((state) => {
+      const inters = state.interactions;
+      return {
+        interactions: inters.update(
+          postIndex,
+          inters.get(postIndex).withShareTargets(target)
+        ),
+      };
+    });
+  }
+  ////////////////////////ahs change end
+
   renderWithStudyAndGame(study, game) {
+    // if (this.state.showSelfReport) {
+    //   return (
+    //     <SelfReport
+    //       onSubmit={this.onSelfReportSubmit} // Pass the submit handler
+    //     />
+    //   );
+    // }
+
+    if (this.state.showSelfReport) {
+      const postIndex = this.getCurrentPostIndex(); // Get the current post index
+      return (
+        <SelfReport
+          onSubmit={(responses) =>
+            this.onSelfReportSubmit(postIndex, responses)
+          } // Pass postIndex and responses
+        />
+      );
+    }
+
     let displayStates = game.states;
 
     const participant = game.participant;
@@ -656,7 +711,9 @@ export class GameScreen extends ActiveGameScreen {
               study.uiSettings.displayPostsInFeed ? "mt-6 scroll-mt-4" : ""
             }
             ////////////////a.h.s change: added the following props
-            onShareTargetSelect={(target) => this.onShareTargetSelect(postIndex, target)}
+            onShareTargetSelect={(target) =>
+              this.onShareTargetSelect(postIndex, target)
+            }
           />
         );
       }

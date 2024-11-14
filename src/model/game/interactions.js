@@ -113,6 +113,21 @@ export class InteractionTimer {
         const time = Date.now();
 
         const firstShowTime = (this.firstShowTime !== null ? this.firstShowTime : time);
+        
+        /////a.h.s change: added timestamp for debugging
+        const date1 = new Date(firstShowTime);
+
+        // Extract date and time components manually
+        const datePart = date1.toLocaleDateString();
+        const timePart = date1.toLocaleTimeString();
+        const milliseconds = String(date1.getMilliseconds()).padStart(3, '0');
+
+        // Combine into the desired format
+        const formattedDate = `${datePart}, ${timePart.slice(0, -3)}.${milliseconds} ${timePart.slice(-2)}`;
+
+        console.log("First time that post is shown:" , formattedDate);
+        //////////////////////ahs change end
+
         const lastShowTime = time;
         const lastHideTime = null;
 
@@ -124,21 +139,41 @@ export class InteractionTimer {
     }
 
     asHidden() {
-        // Already hidden.
-        if (this.lastShowTime === null)
-            return this;
+      // Already hidden.
+      if (this.lastShowTime === null) return this;
 
-        const time = Date.now();
+      const time = Date.now();
 
-        const lastShowTime = null;
-        const lastHideTime = time;
-        const visibleDuration = this.visibleDuration + (time - this.lastShowTime);
+      /////a.h.s change: added timestamp for debugging
+      const date1 = new Date(time);
 
-        return new InteractionTimer(
-            this.firstShowTime, lastShowTime,
-            lastHideTime, visibleDuration,
-            this.firstInteractTime, this.lastInteractTime
-        );
+      // Extract date and time components manually
+      const datePart = date1.toLocaleDateString();
+      const timePart = date1.toLocaleTimeString();
+      const milliseconds = String(date1.getMilliseconds()).padStart(3, "0");
+
+      // Combine into the desired format
+      const formattedDate = `${datePart}, ${timePart.slice(
+        0,
+        -3
+      )}.${milliseconds} ${timePart.slice(-2)}`;
+
+      console.log("Time when post and report are submitted:", formattedDate);
+      //////////////////////ahs change end
+
+      const lastShowTime = null;
+      const lastHideTime = time;
+      //console.log("lastHideTime", lastHideTime);
+      const visibleDuration = this.visibleDuration + (time - this.lastShowTime);
+
+      return new InteractionTimer(
+        this.firstShowTime,
+        lastShowTime,
+        lastHideTime,
+        visibleDuration,
+        this.firstInteractTime,
+        this.lastInteractTime
+      );
     }
 
     withNewInteraction() {
@@ -326,10 +361,19 @@ export class GamePostInteraction {
 
   ///a.h.s change: keep track of who the post was shared with
   shareTargets; // String? - New property to store who the post was shared with
+  selfReportResponses; // String[] - New property to store self-report responses
   //////////////////////ahs change end
 
   /////////////////////a.h.s single change: added shareTargets to constructor
-  constructor(postReactions, commentReactions, lastComment, comment, timer, shareTargets) {
+  constructor(
+    postReactions,
+    commentReactions,
+    lastComment,
+    comment,
+    timer,
+    shareTargets,
+    selfReportResponses
+  ) {
     doArrayTypeCheck(postReactions, "string", "Reactions to Post");
     doArrayTypeCheck(
       commentReactions,
@@ -347,6 +391,7 @@ export class GamePostInteraction {
     //// not sure where it is getting assigned an empty array in the first place
     doNullableTypeCheck(shareTargets, "string", "Share Target"); // Type check for share targets
     this.shareTargets = shareTargets;
+    this.selfReportResponses = selfReportResponses || []; // Initialize self-report responses
     //////////////////////ahs change end
 
     this.postReactions = postReactions;
@@ -363,9 +408,9 @@ export class GamePostInteraction {
       null,
       null,
       InteractionTimer.empty(),
-      //////////////////////a.h.s single change: added shareTargets return
-      null // Initialize share targets
-
+      //////////////////////a.h.s single change: added shareTargets and self report return
+      null, // Initialize share targets,
+      []
     );
   }
 
@@ -396,8 +441,9 @@ export class GamePostInteraction {
       this.lastComment,
       this.comment,
       this.timer.complete(),
-      //////////////////////a.h.s single change: added shareTargets to complete
-      this.shareTargets
+      //////////////////////a.h.s single change: added shareTargets selfReportResponses to complete
+      this.shareTargets,
+      this.selfReportResponses
     );
   }
 
@@ -412,8 +458,9 @@ export class GamePostInteraction {
       this.lastComment,
       this.comment,
       this.timer.asVisible(),
-      //////////////////////a.h.s single change: added shareTargets to asVisible
-      this.shareTargets
+      //////////////////////a.h.s single change: added shareTargets and self responseto asVisible
+      this.shareTargets,
+      this.selfReportResponses
     );
   }
 
@@ -428,16 +475,29 @@ export class GamePostInteraction {
       this.lastComment,
       this.comment,
       this.timer.asHidden(),
-      //////////////////////a.h.s single change: added shareTargets to asHidden
-      this.shareTargets
-    
-
+      //////////////////////a.h.s single change: added shareTargets and self report to asHidden
+      this.shareTargets,
+      this.selfReportResponses
     );
   }
 
-  /////a.h.s change: keep track of who the post was shared with
+  /////a.h.s change: keep track of who the post was shared with and self report responses
+
+  withSelfReportResponses(selfReportResponses) {
+    //console.log("on the with", selfReportResponses);
+    //array check / null check omitted
+    return new GamePostInteraction(
+      this.postReactions,
+      this.commentReactions,
+      this.lastComment,
+      this.comment,
+      this.timer.asHidden(),
+      this.shareTargets, 
+      selfReportResponses // self-report responses
+    );
+  }
+
   withShareTargets(shareTargets) {
-    
     doNullableTypeCheck(shareTargets, "string", "Share Target");
     return new GamePostInteraction(
       this.postReactions,
@@ -445,7 +505,8 @@ export class GamePostInteraction {
       this.lastComment,
       this.comment,
       this.timer.withNewInteraction(),
-      shareTargets 
+      shareTargets,
+      this.selfReportResponses
     );
   }
   //////////////////////ahs change end
@@ -465,8 +526,9 @@ export class GamePostInteraction {
       lastComment,
       comment,
       this.timer.withNewInteraction(),
-      //////////////////////a.h.s single change: added shareTargets to withComment
-      this.shareTargets
+      //////////////////////a.h.s single change: added shareTargets and selfreport to withComment
+      this.shareTargets,
+      this.selfReportResponses
     );
   }
 
@@ -477,8 +539,9 @@ export class GamePostInteraction {
       null,
       null,
       this.timer.withNewInteraction(),
-      //////////////////////a.h.s single change: added shareTargets to withDeletedComment
-      this.shareTargets
+      //////////////////////a.h.s single change: added shareTargets and self report to withDeletedComment
+      this.shareTargets,
+      this.selfReportResponses
     );
   }
 
@@ -503,8 +566,9 @@ export class GamePostInteraction {
       this.lastComment,
       this.comment,
       this.timer.withNewInteraction(),
-      //////////////////////a.h.s single change: added shareTargets to withPostReactions
-      this.shareTargets
+      //////////////////////a.h.s single change: added shareTargets and self report to withPostReactions
+      this.shareTargets,
+      this.selfReportResponses
     );
   }
 
@@ -555,8 +619,9 @@ export class GamePostInteraction {
       this.lastComment,
       this.comment,
       this.timer.withNewInteraction(),
-      //////////////////////a.h.s single change: added shareTargets to withCommentReaction
-      this.shareTargets
+      //////////////////////a.h.s single change: added shareTargets and self report to withCommentReaction
+      this.shareTargets,
+      this.selfReportResponses
     );
   }
 
@@ -594,8 +659,9 @@ export class GamePostInteraction {
       comment: this.comment,
       timer: this.timer.toJSON(),
 
-      //////////////////////a.h.s single change: added shareTargets to JSON
+      //////////////////////a.h.s single change: added shareTargets and self report to JSON
       shareTargets: this.shareTargets,
+      selfReportResponses: this.selfReportResponses,
     };
   }
 
@@ -631,8 +697,9 @@ export class GamePostInteraction {
     const postReactions = json["postReactions"];
     const postReaction = json["postReaction"];
     const comment = json["comment"];
-    //////////////////////a.h.s single change: added shareTargets to JSON
-    const shareTargets = json["shareTargets"]; 
+    //////////////////////a.h.s single change: added shareTargets and self report to JSON
+    const shareTargets = json["shareTargets"];
+    const selfReportResponses = json["selfReportResponses"] || []; // Initialize self-report responses
     //if share targets is an empty array , change it to string
 
     return new GamePostInteraction(
@@ -647,7 +714,8 @@ export class GamePostInteraction {
       timer,
       //////////////////////a.h.s single change: added shareTargets to JSON
       //check if shareTargets is an empty array if yes change it to string
-      shareTargets
+      shareTargets,
+      selfReportResponses
     );
   }
 }
