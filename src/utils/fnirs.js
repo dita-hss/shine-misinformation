@@ -4,11 +4,11 @@ let reader;
 
 export async function connectToDevice() {
   try {
-    // Request port and open connection
+    // request port and open connection
     port = await navigator.serial.requestPort();
     await port.open({ baudRate: 115200 });
 
-    // Set up writer and reader
+    // set up writer and reader
     const textEncoder = new TextEncoderStream();
     const textDecoder = new TextDecoderStream();
 

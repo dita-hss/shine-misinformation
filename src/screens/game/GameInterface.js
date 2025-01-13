@@ -581,9 +581,8 @@ export class GameScreen extends ActiveGameScreen {
     if (currentPostIndex >= study.basicSettings.length) return;
 
     try {
-      // Send trigger to fNIRS device
       console.log("Sending trigger to fNIRS device...");
-      const condition = currentPostIndex + 1; // Example: Use post index as condition
+      const condition = currentPostIndex + 1;
       const command = `mh${String.fromCharCode(condition)}${String.fromCharCode(
         0
       )}`;
