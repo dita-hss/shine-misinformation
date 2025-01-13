@@ -567,6 +567,7 @@ export class GameScreen extends ActiveGameScreen {
   }
 
   async onNextPost() {
+    console.log("CHECKKCEKKC");
     const game = this.state.game;
     if (!game) throw new Error("There is no active game!");
 
@@ -583,6 +584,7 @@ export class GameScreen extends ActiveGameScreen {
       this.scrollToNextPost(true);
     } else {
       try {
+        console.log("Sending trigger to fNIRS device");
         const command = `mh${String.fromCharCode(10)}${String.fromCharCode(0)}`;
         await sendTriggerToDevice(command);
       } catch (error) {
