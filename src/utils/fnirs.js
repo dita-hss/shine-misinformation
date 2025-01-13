@@ -80,6 +80,7 @@ export async function sendTriggerToDevice(command) {
     return;
   }
   try {
+    console.log("awaiting")
     await writer.write(command);
     console.log("Command sent to device:", command);
   } catch (error) {
