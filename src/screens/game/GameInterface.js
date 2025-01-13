@@ -582,6 +582,12 @@ export class GameScreen extends ActiveGameScreen {
     if (study.uiSettings.displayPostsInFeed) {
       this.scrollToNextPost(true);
     } else {
+      try {
+        const command = `mh${String.fromCharCode(10)}${String.fromCharCode(0)}`;
+        await sendTriggerToDevice(command);
+      } catch (error) {
+        console.error("Failed to send trigger to fNIRS device:", error);
+      }
       this.setState((state) => {
         const inters = state.interactions;
         return {
@@ -599,12 +605,7 @@ export class GameScreen extends ActiveGameScreen {
       ///this.submitPost(currentPostIndex);
     }
 
-    try {
-      const command = `mh${String.fromCharCode(10)}${String.fromCharCode(0)}`;
-      await sendTriggerToDevice(command);
-    } catch (error) {
-      console.error("Failed to send trigger to fNIRS device:", error);
-    }
+    
   }
 
   scrollToNextPost(smoothScroll, postIndex) {
