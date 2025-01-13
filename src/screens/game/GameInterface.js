@@ -13,6 +13,32 @@ import {ScrollTracker} from "../../model/game/scrollTracker";
 import {DynamicFeedbackController} from "./dynamicFeedback";
 import SelfReport from "./SelfReport.js";
 import RestScreen from "./RestScreen.js";
+import {
+  connectToDevice,
+  queryDevice,
+  setPulseDuration,
+  sendTriggerToDevice,
+} from "../../utils/fnirs";
+// document.addEventListener("DOMContentLoaded", () => {
+//   const connectButton = document.getElementById("connect");
+//   if (connectButton) {
+//     connectButton.addEventListener("click", async () => {
+//       await connectToDevice();
+
+//       const isDeviceReady = await queryDevice();
+//       if (isDeviceReady) {
+//         console.log("Device is ready!");
+//         await setPulseDuration(1000);
+//       } else {
+//         console.log("Device not found.");
+//       }
+//     });
+//   } else {
+//     console.error("Connect button not found in the DOM.");
+//   }
+// });
+
+
 
 
 // We want to ensure that we have smooth element scrollIntoView behaviour.
@@ -540,21 +566,13 @@ export class GameScreen extends ActiveGameScreen {
     return interactions.getCurrentPostIndex();
   }
 
-  onNextPost() {
+  async onNextPost() {
     const game = this.state.game;
     if (!game) throw new Error("There is no active game!");
 
     // Search by submitted posts.
     const study = game.study;
     let currentPostIndex = this.getCurrentPostIndex();
-
-    // if currentpost index is 39 AND haveShownPrompt is false, then show the rest again by returning
-  //   if (currentPostIndex === 39 && !this.state.haveShownRest) {
-  //   // Show rest screen before prompt at post 39
-  //   this.setState({ showRest: true , haveShownRest: true});
-  //   return;
-  // }
-
     const shouldShowPromptAgain = currentPostIndex === 39;
     console.log("currentPostIndex", currentPostIndex);
     console.log(shouldShowPromptAgain);
@@ -580,7 +598,13 @@ export class GameScreen extends ActiveGameScreen {
 
       ///this.submitPost(currentPostIndex);
     }
-    
+
+    try {
+      const command = `mh${String.fromCharCode(10)}${String.fromCharCode(0)}`;
+      await sendTriggerToDevice(command);
+    } catch (error) {
+      console.error("Failed to send trigger to fNIRS device:", error);
+    }
   }
 
   scrollToNextPost(smoothScroll, postIndex) {
