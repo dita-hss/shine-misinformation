@@ -6,7 +6,7 @@ import {postResults} from "../../database/postToDB";
 import {generateUID} from "../../utils/uid";
 import {getUnixEpochTimeSeconds} from "../../utils/time";
 import {compressJson, decompressJson} from "../../database/compressJson";
-import {GamePostInteractionStore} from "./interactions";
+import {GamePostInteractionStore, InteractionTimer} from "./interactions";
 import {GamePost, GameSource, GameState} from "./gameState";
 import {GameParticipant} from "./gameParticipant";
 
@@ -28,8 +28,11 @@ export class Game {
 
     saveResultsToDatabasePromise; // Promise, not saved
 
+    startTimeRelative; 
+    endTimeRelative; 
+
     constructor(study, studyModTime, sessionID, startTime, endTime,
-                states, participant, completionCode, savedResults) {
+                states, participant, completionCode, savedResults, startTimeRelative, endTimeRelative) {
 
         doTypeCheck(study, Study, "Game Study");
         doTypeCheck(studyModTime, "number", "Game Study Modification Time");
@@ -43,7 +46,9 @@ export class Game {
         this.sessionID = sessionID;
         this.study = study;
         this.studyModTime = studyModTime;
+        this.startTimeRelative = startTimeRelative;
         this.startTime = startTime;
+        this.endTimeRelative = endTimeRelative || null;
         this.endTime = endTime || null;
         this.states = states;
         this.latestStatePosts = null;
@@ -171,6 +176,8 @@ export class Game {
             if (this.study.advancedSettings.genCompletionCode) {
                 this.completionCode = this.study.generateRandomCompletionCode();
             }
+            console.log("Game finished now at: " + getUnixEpochTimeSeconds());
+            this.endTimeRelative = Date.now();
             this.endTime = getUnixEpochTimeSeconds();
         }
 
@@ -307,7 +314,9 @@ export class Game {
             "states": Game.statesToJSON(this.states),
             "participant": this.participant.toJSON(),
             "completionCode": this.completionCode || null,  // Firebase doesn't like undefined
-            "savedResults": this.savedResults
+            "savedResults": this.savedResults,
+            "startTimeRelative": this.startTimeRelative,
+            "endTimeRelative": this.endTimeRelative
         };
         return json;
     }
@@ -329,7 +338,9 @@ export class Game {
             Game.statesFromJSON(json["states"], study),
             GameParticipant.fromJSON(json["participant"]),
             json["completionCode"] || null,
-            (json["savedResults"] !== undefined ? json["savedResults"] : true)
+            (json["savedResults"] !== undefined ? json["savedResults"] : true),
+            json["startTimeRelative"],
+            json["endTimeRelative"]
         );
     }
 
@@ -347,8 +358,10 @@ export class Game {
         const game = new Game(
             study, study.lastModifiedTime, sessionID,
             getUnixEpochTimeSeconds(),
-            null, [], participant, null, false
+            null, [], participant, null, false, Date.now(), null
         );
+        console.log("Game started now at: " + getUnixEpochTimeSeconds());
+        console.log("Game started now at: " + Date.now());
         game.calculateAllStates();
         game.saveLocally();
         return game;

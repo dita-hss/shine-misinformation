@@ -12,6 +12,7 @@ import {GamePostInteractionStore} from "../../model/game/interactions";
 import {ScrollTracker} from "../../model/game/scrollTracker";
 import {DynamicFeedbackController} from "./dynamicFeedback";
 import SelfReport from "./SelfReport.js";
+import RestScreen from "./RestScreen.js";
 
 
 // We want to ensure that we have smooth element scrollIntoView behaviour.
@@ -144,8 +145,11 @@ export class GameScreen extends ActiveGameScreen {
     super(props, ["introduction-or-game", "game", "debrief"]);
     this.defaultState = {
       ...this.defaultState,
+      showRest: false,
+      currentRestIndex: 0,
 
       error: null,
+      haveShownPrompt: false,
 
       showSelfReport: false,
       allowReactions: true,
@@ -261,10 +265,34 @@ export class GameScreen extends ActiveGameScreen {
   }
 
   onPromptContinue(study) {
+    const time = Date.now();
+    const date = new Date(time);
+    const datePart = date.toLocaleDateString();
+    const timePart = date.toLocaleTimeString();
+    const milliseconds = String(date.getMilliseconds()).padStart(3, "0");
+    const formattedTime = `${datePart}, ${timePart.slice(
+      0,
+      -3
+    )}.${milliseconds} ${timePart.slice(-2)}`;
+
+    console.log("update interaction", formattedTime, "time", time);
+
     this.setState((prevState) => {
+      const inters = prevState.interactions;
+
+      // Determine the index to update based on whether the prompt has been shown
+        
+      const postIndex = prevState.haveShownPrompt ? 39 : 0;
+
       return {
         ...prevState,
         dismissedPrompt: true,
+        haveShownPrompt: true, // Mark the prompt as shown
+        interactions: inters.update(
+          postIndex,
+          inters.get(postIndex).withUpdatedTimes([formattedTime], [time])
+        ),
+        showRest: true,
       };
     });
 
@@ -519,18 +547,33 @@ export class GameScreen extends ActiveGameScreen {
     // Search by submitted posts.
     const study = game.study;
     let currentPostIndex = this.getCurrentPostIndex();
+
+    const shouldShowPromptAgain = currentPostIndex === 39;
+    console.log("currentPostIndex", currentPostIndex);
+    console.log(shouldShowPromptAgain);
+
     if (currentPostIndex >= study.basicSettings.length) return;
 
     if (study.uiSettings.displayPostsInFeed) {
       this.scrollToNextPost(true);
     } else {
-
-      this.setState(() => {
-        return { showSelfReport: true };
+      this.setState((state) => {
+        const inters = state.interactions;
+        return {
+          showSelfReport: true,
+          interactions: inters.update(
+            currentPostIndex,
+            inters.get(currentPostIndex).withStartSelfReportResponses()
+          ),
+          dismissedPrompt: shouldShowPromptAgain
+            ? false
+            : state.dismissedPrompt,
+        };
       });
-      
+
       ///this.submitPost(currentPostIndex);
     }
+    
   }
 
   scrollToNextPost(smoothScroll, postIndex) {
@@ -581,6 +624,10 @@ export class GameScreen extends ActiveGameScreen {
   ////////////////a.h.s change: added the following functions to save the state of the game
   onSelfReportSubmit = (postIndex, responses) => {
     //console.log("on the self report", responses);
+    const currentPostIndex = this.getCurrentPostIndex();
+    if (currentPostIndex === 59) {
+      this.setState({ showRest: true });
+    }
 
     // Update interactions and set showSelfReport to false, then call onNextPost
     this.setState(
@@ -592,7 +639,6 @@ export class GameScreen extends ActiveGameScreen {
             inters.get(postIndex).withSelfReportResponses(responses)
           ),
           showSelfReport: false, // Hide SelfReport screen
-          
         };
       },
       () => {
@@ -616,6 +662,10 @@ export class GameScreen extends ActiveGameScreen {
   }
   ////////////////////////ahs change end
 
+  onRestTimeout = () => {
+    this.setState({ showRest: false });
+  };
+
   renderWithStudyAndGame(study, game) {
     // if (this.state.showSelfReport) {
     //   return (
@@ -624,7 +674,13 @@ export class GameScreen extends ActiveGameScreen {
     //     />
     //   );
     // }
-
+    if (this.state.showRest) {
+      return (
+        <RestScreen
+          onTimeout={this.onRestTimeout} // Pass the timeout handler
+        />
+      );
+    }
     if (this.state.showSelfReport) {
       const postIndex = this.getCurrentPostIndex(); // Get the current post index
       return (
@@ -734,8 +790,8 @@ export class GameScreen extends ActiveGameScreen {
 
         <div
           className={
-            "flex flex-row items-start w-full bg-gray-100 " +
-            (displayPrompt ? " filter blur " : "")
+            "flex flex-row items-start w-full bg-gray-100 "
+            //(displayPrompt ? " filter blur " : "")
           }
           style={{ minHeight: "100vh" }}
         >

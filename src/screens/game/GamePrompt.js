@@ -7,7 +7,7 @@ export class GamePrompt extends Component {
         const study = this.props.study;
         return (
             <div className="fixed left-0 top-0 w-full flex flex-col z-50
-                            justify-center items-center bg-white bg-opacity-80"
+                            justify-center items-center bg-white bg-opacity-100"
                  style={{minHeight: "100vh"}}>
 
                 <div className="m-4 max-w-2xl">

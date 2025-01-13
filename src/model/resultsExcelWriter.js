@@ -119,6 +119,9 @@ function constructWorkbook(study, results, problems) {
         {header: "Dwell Time (MS)", key: "dwellTime", width: 22},
         {header: "First Time to Interact (MS)", key: "firstInteractTime", width: 32},
         {header: "Last Time to Interact (MS)", key: "lastInteractTime", width: 32},
+        {header: "Interaction List Time (MS)", key: "interactionListTime", width: 32},
+        {header: "Interaction List Time Unrelative (MS)", key: "interactionListTimeUnrelative", width: 32},
+        {header: "Interaction List Time Relative (MS)", key: "interactionListTimeRelative", width: 32},
 
         {header: "Credibility Change", key: "credibilityChange", width: 22, enabled: showCredibility},
         {header: "Follower Change", key: "followerChange", width: 22, enabled: showFollowers},
@@ -130,65 +133,95 @@ function constructWorkbook(study, results, problems) {
     ]);
     
     for(let index = 0; index < results.length; index++) {
-        const game = results[index];
-        const participant = game.participant;
-        for (let stateIndex = 0; stateIndex < game.states.length; stateIndex++) {
-            const state = game.states[stateIndex];
-            const likes = state.currentPost.numberOfReactions.like;
-            const dislikes = state.currentPost.numberOfReactions.dislike;
-            const shares = state.currentPost.numberOfReactions.share;
-            const flags = state.currentPost.numberOfReactions.flag;
-            const interaction = participant.postInteractions.get(stateIndex);
-            //console.log(interaction.shareTargets);
-            const beforeCredibility = Math.round(participant.credibilityHistory[stateIndex]);
-            const afterCredibility = Math.round(participant.credibilityHistory[stateIndex + 1]);
-            const beforeFollowers = Math.round(participant.followerHistory[stateIndex]);
-            const afterFollowers = Math.round(participant.followerHistory[stateIndex + 1]);
-
-            // if the shared with targets is an empty array , change it to an empty string
-            
-            postsWorksheet.addRow({
-                sessionID: game.sessionID,
-                participantID: participant.participantID || "",
-                postOrder: stateIndex + 1,
-                postID: state.currentPost.post.id,
-
-                sourceID: state.currentSource.source.id,
-                sourceFollowers: Math.round(state.currentSource.followers),
-                sourceCredibility: Math.round(state.currentSource.credibility),
-
-                postHeadline: state.currentPost.post.headline || "",
-                postLikes: (likes === undefined ? "" : likes),
-                postDislikes: (dislikes === undefined ? "" : dislikes),
-                postShares: (shares === undefined ? "" : shares),
-                postFlags: (flags === undefined ? "" : flags),
-
-                likedPost: interaction.hasPostReaction("like"),
-                dislikedPost: interaction.hasPostReaction("dislike"),
-                sharedPost: interaction.hasPostReaction("share"),
-                flaggedPost: interaction.hasPostReaction("flag"),
-                skippedPost: interaction.hasPostReaction("skip"),
-                comment: interaction.comment || "",
-                
-                ///a.h.s change: adding the value of share target column to the excel file
-                shareTargets: interaction.shareTargets || "",
-                selfReportResponses: interaction.selfReportResponses || [],
+      const game = results[index];
+      const participant = game.participant;
+      const startTime = game.startTimeRelative; // Experiment start time
+      //console.log("Start Time: " + startTime);
+      const endTime = game.endTime; // Experiment end time
+      for (let stateIndex = 0; stateIndex < game.states.length; stateIndex++) {
 
 
-                dwellTime: numToCellValue(interaction.timer.getDwellTimeMS()),
-                firstInteractTime: numToCellValue(interaction.timer.getTimeToFirstInteractMS()),
-                lastInteractTime: numToCellValue(interaction.timer.getTimeToLastInteractMS()),
+        const state = game.states[stateIndex];
+        const likes = state.currentPost.numberOfReactions.like;
+        const dislikes = state.currentPost.numberOfReactions.dislike;
+        const shares = state.currentPost.numberOfReactions.share;
+        const flags = state.currentPost.numberOfReactions.flag;
+        const interaction = participant.postInteractions.get(stateIndex);
 
-                credibilityChange: afterCredibility - beforeCredibility,
-                followerChange: afterFollowers - beforeFollowers,
+        ////
+        const interactionTimesUnrelative = interaction.timer.interactionTimesUnrelative || [];
+        const relativeInteractionTimes = interactionTimesUnrelative.map(
+          (time) => time - startTime
+        );
 
-                beforeCredibility: beforeCredibility,
-                beforeFollowers: beforeFollowers,
-                afterCredibility: afterCredibility,
-                afterFollowers: afterFollowers,
-            });
-            containsAnyPosts = true;
-        }
+        // Combine into a single array
+        const allRelativeTimes = [...relativeInteractionTimes].sort((a, b) => a - b);
+        ////
+        
+        //console.log(interaction.shareTargets);
+        const beforeCredibility = Math.round(
+          participant.credibilityHistory[stateIndex]
+        );
+        const afterCredibility = Math.round(
+          participant.credibilityHistory[stateIndex + 1]
+        );
+        const beforeFollowers = Math.round(
+          participant.followerHistory[stateIndex]
+        );
+        const afterFollowers = Math.round(
+          participant.followerHistory[stateIndex + 1]
+        );
+
+        // if the shared with targets is an empty array , change it to an empty string
+
+        postsWorksheet.addRow({
+          sessionID: game.sessionID,
+          participantID: participant.participantID || "",
+          postOrder: stateIndex + 1,
+          postID: state.currentPost.post.id,
+
+          sourceID: state.currentSource.source.id,
+          sourceFollowers: Math.round(state.currentSource.followers),
+          sourceCredibility: Math.round(state.currentSource.credibility),
+
+          postHeadline: state.currentPost.post.headline || "",
+          postLikes: likes === undefined ? "" : likes,
+          postDislikes: dislikes === undefined ? "" : dislikes,
+          postShares: shares === undefined ? "" : shares,
+          postFlags: flags === undefined ? "" : flags,
+
+          likedPost: interaction.hasPostReaction("like"),
+          dislikedPost: interaction.hasPostReaction("dislike"),
+          sharedPost: interaction.hasPostReaction("share"),
+          flaggedPost: interaction.hasPostReaction("flag"),
+          skippedPost: interaction.hasPostReaction("skip"),
+          comment: interaction.comment || "",
+
+          ///a.h.s change: adding the value of share target column to the excel file
+          shareTargets: interaction.shareTargets || "",
+          selfReportResponses: interaction.selfReportResponses || [],
+
+          dwellTime: numToCellValue(interaction.timer.getDwellTimeMS()),
+          firstInteractTime: numToCellValue(
+            interaction.timer.getTimeToFirstInteractMS()
+          ),
+          lastInteractTime: numToCellValue(
+            interaction.timer.getTimeToLastInteractMS()
+          ),
+          interactionListTime: interaction.timer.interactionTimesFormatted,
+          interactionListTimeUnrelative: interaction.timer.interactionTimesUnrelative,
+          interactionListTimeRelative: allRelativeTimes,
+
+          credibilityChange: afterCredibility - beforeCredibility,
+          followerChange: afterFollowers - beforeFollowers,
+
+          beforeCredibility: beforeCredibility,
+          beforeFollowers: beforeFollowers,
+          afterCredibility: afterCredibility,
+          afterFollowers: afterFollowers,
+        });
+        containsAnyPosts = true;
+      }
     }
     styleWorksheetHeader(postsWorksheet);
     if (!containsAnyPosts) {

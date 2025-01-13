@@ -1,352 +1,559 @@
-import {doArrayTypeCheck, doNullableArrayTypeCheck, doNullableTypeCheck, doTypeCheck} from "../../utils/types";
+import {
+  doArrayTypeCheck,
+  doNullableArrayTypeCheck,
+  doNullableTypeCheck,
+  doTypeCheck,
+} from "../../utils/types";
 
+function toggleReactionPresenceInArray(
+  currentReactions,
+  reaction,
+  allowMultipleReactions
+) {
+  // Skips are always mutually exclusive to other reactions.
+  if (reaction === "skip") {
+    if (detectReactionPresenceInArray(currentReactions, "skip")) return [];
+    else return ["skip"];
+  }
 
-function toggleReactionPresenceInArray(currentReactions, reaction, allowMultipleReactions) {
-    // Skips are always mutually exclusive to other reactions.
-    if (reaction === "skip") {
-        if (detectReactionPresenceInArray(currentReactions, "skip"))
-            return [];
-        else
-            return ["skip"];
+  // Attempt to find and remove the reaction.
+  const newReactions = [];
+  let foundReaction = false;
+  for (let index = 0; index < currentReactions.length; ++index) {
+    const currentReaction = currentReactions[index];
+    if (currentReaction === reaction) {
+      foundReaction = true;
+    } else if (currentReaction !== "skip") {
+      newReactions.push(currentReaction);
     }
+  }
+  if (foundReaction) return newReactions;
+  if (!allowMultipleReactions) return [reaction];
 
-    // Attempt to find and remove the reaction.
-    const newReactions = [];
-    let foundReaction = false;
-    for (let index = 0; index < currentReactions.length; ++index) {
-        const currentReaction = currentReactions[index];
-        if (currentReaction === reaction) {
-            foundReaction = true;
-        } else if (currentReaction !== "skip") {
-            newReactions.push(currentReaction);
-        }
-    }
-    if (foundReaction)
-        return newReactions;
-    if (!allowMultipleReactions)
-        return [reaction];
-
-    newReactions.push(reaction);
-    return newReactions;
+  newReactions.push(reaction);
+  return newReactions;
 }
 
 function detectReactionPresenceInArray(reactions, reaction) {
-    for (let index = 0; index < reactions.length; ++index) {
-        if (reactions[index] === reaction)
-            return true;
-    }
-    return false;
+  for (let index = 0; index < reactions.length; ++index) {
+    if (reactions[index] === reaction) return true;
+  }
+  return false;
 }
-
 
 /**
  * Keeps track of how long it took participants to interact with something.
  */
 export class InteractionTimer {
-    firstShowTime; // Number? (UNIX Milliseconds)
-    lastShowTime; // Number? (UNIX Milliseconds)
-    lastHideTime; // Number? (UNIX Milliseconds)
-    visibleDuration; // Number (Milliseconds)
+  firstShowTime; // Number? (UNIX Milliseconds) // start of post --------x
+  lastShowTime; // Number? (UNIX Milliseconds) // end of post    --------x
+  lastHideTime; // Number? (UNIX Milliseconds)                   --------x
+  visibleDuration; // Number (Milliseconds)                      --------x
 
-    firstInteractTime; // Number? (UNIX Milliseconds)
-    lastInteractTime; // Number? (UNIX Milliseconds)
+  firstInteractTime; // Number? (UNIX Milliseconds)              --------x
+  lastInteractTime; // Number? (UNIX Milliseconds)               --------x
 
-    constructor(firstShowTime, lastShowTime, lastHideTime, visibleDuration, firstInteractTime, lastInteractTime) {
-        doNullableTypeCheck(firstShowTime, "number", "Time when First Visible");
-        doNullableTypeCheck(lastShowTime, "number", "Time when Last Visible");
-        doNullableTypeCheck(lastHideTime, "number", "Time when Last Hidden");
-        doTypeCheck(visibleDuration, "number", "Time Spent Visible");
-        doNullableTypeCheck(firstInteractTime, "number", "Time of First Interaction");
-        doNullableTypeCheck(lastInteractTime, "number", "Time of Last Interaction");
-        this.firstShowTime = (firstShowTime !== undefined ? firstShowTime : null);
-        this.lastShowTime = (lastShowTime !== undefined ? lastShowTime : null);
-        this.lastHideTime = (lastHideTime !== undefined ? lastHideTime : null);
-        this.visibleDuration = (visibleDuration !== undefined ? visibleDuration : null);
-        this.firstInteractTime = (firstInteractTime !== undefined ? firstInteractTime : null);
-        this.lastInteractTime = (lastInteractTime !== undefined ? lastInteractTime : null);
+  //interaction array: keeps track of every interaction time is in the format of 11:11:11.111
+  interactionTimesFormatted; // String[]
+  //interaction array: keeps track of every interaction time (not relative)
+  interactionTimesUnrelative; // Number[]
+
+  constructor(
+    firstShowTime,
+    lastShowTime,
+    lastHideTime,
+    visibleDuration,
+    firstInteractTime,
+    lastInteractTime,
+    interactionTimesFormatted,
+    interactionTimesUnrelative
+  ) {
+    doNullableTypeCheck(firstShowTime, "number", "Time when First Visible");
+    doNullableTypeCheck(lastShowTime, "number", "Time when Last Visible");
+    doNullableTypeCheck(lastHideTime, "number", "Time when Last Hidden");
+    doTypeCheck(visibleDuration, "number", "Time Spent Visible");
+    doNullableTypeCheck(
+      firstInteractTime,
+      "number",
+      "Time of First Interaction"
+    );
+    doNullableTypeCheck(lastInteractTime, "number", "Time of Last Interaction");
+    this.firstShowTime = firstShowTime !== undefined ? firstShowTime : null;
+    this.lastShowTime = lastShowTime !== undefined ? lastShowTime : null;
+    this.lastHideTime = lastHideTime !== undefined ? lastHideTime : null;
+    this.visibleDuration =
+      visibleDuration !== undefined ? visibleDuration : null;
+    this.firstInteractTime =
+      firstInteractTime !== undefined ? firstInteractTime : null;
+    this.lastInteractTime =
+      lastInteractTime !== undefined ? lastInteractTime : null;
+    this.interactionTimesFormatted = interactionTimesFormatted || [];
+    this.interactionTimesUnrelative = interactionTimesUnrelative || [];
+  }
+
+  static empty() {
+    return new InteractionTimer(null, null, null, 0, null, null);
+  }
+
+  getTimeToFirstInteractMS() {
+    if (this.firstInteractTime === null || this.firstShowTime === null)
+      return NaN;
+
+    return this.firstInteractTime - this.firstShowTime;
+  }
+
+  getTimeToLastInteractMS() {
+    if (this.lastInteractTime === null || this.firstShowTime === null)
+      return NaN;
+    //console.log("last time to interact", this.lastInteractTime - this.firstShowTime);
+    return this.lastInteractTime - this.firstShowTime;
+  }
+
+  /**
+   * Only supported when the interaction timer has been marked as hidden.
+   * This does not actively count while the timer is actively counting
+   * while the post is visible.
+   */
+  getDwellTimeMS() {
+    return this.visibleDuration;
+  }
+
+  withClearedInteractions() {
+    return new InteractionTimer(
+      this.firstShowTime,
+      this.lastShowTime,
+      this.lastHideTime,
+      this.visibleDuration,
+      null,
+      null,
+      null,
+      null
+    );
+  }
+
+  asVisible() {
+    // Already visible.
+    if (this.lastShowTime !== null) return this;
+
+    const time = Date.now();
+
+    const firstShowTime =
+      this.firstShowTime !== null ? this.firstShowTime : time;
+
+    /////a.h.s change: added timestamp for debugging
+    const date1 = new Date(time);
+
+    // Extract date and time components manually
+    const datePart = date1.toLocaleDateString();
+    const timePart = date1.toLocaleTimeString();
+    const milliseconds = String(date1.getMilliseconds()).padStart(3, "0");
+
+    // Combine into the desired format
+    const formattedDate = `${datePart}, ${timePart.slice(
+      0,
+      -3
+    )}.${milliseconds} ${timePart.slice(-2)}`;
+
+    // add the formatted date to interactionTimesFormatted
+    const lastInteractionTemp = this.interactionTimesFormatted.at(-1);
+    const lastInteractionTimeTemp = lastInteractionTemp
+      ? new Date(lastInteractionTemp).getTime()
+      : null;
+
+    // Add the formatted date if it's not already in the array and not within 1ms of the last one
+    if (
+      (!lastInteractionTimeTemp ||
+        Math.abs(time - lastInteractionTimeTemp) > 1) &&
+      !this.interactionTimesFormatted.includes(formattedDate)
+    ) {
+      this.interactionTimesFormatted.push(formattedDate);
+      this.interactionTimesUnrelative.push(time);
+      console.log(
+        "When the post is first shown:",
+        this.interactionTimesFormatted
+      );
     }
+    //////////////////////ahs change end
 
-    static empty() {
-        return new InteractionTimer(
-            null, null,
-            null, 0,
-            null, null
-        );
-    }
+    const lastShowTime = time;
+    const lastHideTime = null;
 
-    getTimeToFirstInteractMS() {
-        if (this.firstInteractTime === null || this.firstShowTime === null)
-            return NaN;
+    return new InteractionTimer(
+      firstShowTime,
+      lastShowTime,
+      lastHideTime,
+      this.visibleDuration,
+      this.firstInteractTime,
+      this.lastInteractTime,
+      this.interactionTimesFormatted,
+      this.interactionTimesUnrelative
+    );
+  }
 
-        return this.firstInteractTime - this.firstShowTime;
-    }
+  withSelfReport() {
+    //push time of self report to interactionTimesFormatted and interactionTimesUnrelative
 
-    getTimeToLastInteractMS() {
-        if (this.lastInteractTime === null || this.firstShowTime === null)
-            return NaN;
+    const time = Date.now();
+    const date1 = new Date(time);
 
-        return this.lastInteractTime - this.firstShowTime;
-    }
+    // Extract date and time components manually
+    const datePart = date1.toLocaleDateString();
+    const timePart = date1.toLocaleTimeString();
+    const milliseconds = String(date1.getMilliseconds()).padStart(3, "0");
 
-    /**
-     * Only supported when the interaction timer has been marked as hidden.
-     * This does not actively count while the timer is actively counting
-     * while the post is visible.
-     */
-    getDwellTimeMS() {
-        return this.visibleDuration;
-    }
+    // Combine into the desired format
+    const formattedDate = `${datePart}, ${timePart.slice(
+      0,
+      -3
+    )}.${milliseconds} ${timePart.slice(-2)}`;
 
-    withClearedInteractions() {
-        return new InteractionTimer(
-            this.firstShowTime, this.lastShowTime,
-            this.lastHideTime, this.visibleDuration,
-            null, null
-        );
-    }
+    // add the formatted date to interactionTimesFormatted
+    const lastInteractionTemp = this.interactionTimesFormatted.at(-1);
+    const lastInteractionTimeTemp = lastInteractionTemp
+      ? new Date(lastInteractionTemp).getTime()
+      : null;
 
-    asVisible() {
-        // Already visible.
-        if (this.lastShowTime !== null)
-            return this;
-
-        const time = Date.now();
-
-        const firstShowTime = (this.firstShowTime !== null ? this.firstShowTime : time);
-        
-        /////a.h.s change: added timestamp for debugging
-        const date1 = new Date(firstShowTime);
-
-        // Extract date and time components manually
-        const datePart = date1.toLocaleDateString();
-        const timePart = date1.toLocaleTimeString();
-        const milliseconds = String(date1.getMilliseconds()).padStart(3, '0');
-
-        // Combine into the desired format
-        const formattedDate = `${datePart}, ${timePart.slice(0, -3)}.${milliseconds} ${timePart.slice(-2)}`;
-
-        console.log("First time that post is shown:" , formattedDate);
-        //////////////////////ahs change end
-
-        const lastShowTime = time;
-        const lastHideTime = null;
-
-        return new InteractionTimer(
-            firstShowTime, lastShowTime,
-            lastHideTime, this.visibleDuration,
-            this.firstInteractTime, this.lastInteractTime
-        );
-    }
-
-    asHidden() {
-      // Already hidden.
-      if (this.lastShowTime === null) return this;
-
-      const time = Date.now();
-
-      /////a.h.s change: added timestamp for debugging
-      const date1 = new Date(time);
-
-      // Extract date and time components manually
-      const datePart = date1.toLocaleDateString();
-      const timePart = date1.toLocaleTimeString();
-      const milliseconds = String(date1.getMilliseconds()).padStart(3, "0");
-
-      // Combine into the desired format
-      const formattedDate = `${datePart}, ${timePart.slice(
-        0,
-        -3
-      )}.${milliseconds} ${timePart.slice(-2)}`;
-
-      console.log("Time when post and report are submitted:", formattedDate);
-      //////////////////////ahs change end
-
-      const lastShowTime = null;
-      const lastHideTime = time;
-      //console.log("lastHideTime", lastHideTime);
-      const visibleDuration = this.visibleDuration + (time - this.lastShowTime);
-
-      return new InteractionTimer(
-        this.firstShowTime,
-        lastShowTime,
-        lastHideTime,
-        visibleDuration,
-        this.firstInteractTime,
-        this.lastInteractTime
+    // Add the formatted date if it's not already in the array and not within 1ms of the last one
+    if (
+      (!lastInteractionTimeTemp ||
+        Math.abs(time - lastInteractionTimeTemp) > 1) &&
+      !this.interactionTimesFormatted.includes(formattedDate)
+    ) {
+      this.interactionTimesFormatted.push(formattedDate);
+      this.interactionTimesUnrelative.push(time);
+      console.log(
+        "Self Report Startted/Submitted",
+        this.interactionTimesFormatted
+      );
+      console.log(
+        "Self Report Startted/Submitted",
+        this.interactionTimesUnrelative
       );
     }
 
-    withNewInteraction() {
-        const time = Date.now();
+    return new InteractionTimer(
+      this.firstShowTime,
+      this.lastShowTime,
+      this.lastHideTime,
+      this.visibleDuration,
+      this.firstInteractTime,
+      this.lastInteractTime,
+      this.interactionTimesFormatted,
+      this.interactionTimesUnrelative
+    );
+  }
+  withUpdatedTimes(formattedTime, time) {
+    //console.log("Time updated for first post", formattedTime);
+    return new InteractionTimer(
+      this.firstShowTime,
+      this.lastShowTime,
+      this.lastHideTime,
+      this.visibleDuration,
+      this.firstInteractTime,
+      this.lastInteractTime,
+      formattedTime, // Replace the array with a single formatted time
+      time // Replace the array with a single timestamp
+    );
+  }
 
-        const firstInteractTime = (this.firstInteractTime !== null ? this.firstInteractTime : time);
-        const lastInteractTime = time;
+  asHidden() {
+    // Already hidden.
+    if (this.lastShowTime === null) return this;
 
-        return new InteractionTimer(
-            this.firstShowTime, this.lastShowTime,
-            this.lastHideTime, this.visibleDuration,
-            firstInteractTime, lastInteractTime
-        );
+    const time = Date.now();
+
+    /////a.h.s change: added timestamp for debugging
+    const date1 = new Date(time);
+
+    // Extract date and time components manually
+    const datePart = date1.toLocaleDateString();
+    const timePart = date1.toLocaleTimeString();
+    const milliseconds = String(date1.getMilliseconds()).padStart(3, "0");
+
+    // Combine into the desired format
+    const formattedDate = `${datePart}, ${timePart.slice(
+      0,
+      -3
+    )}.${milliseconds} ${timePart.slice(-2)}`;
+
+    console.log("Time when post and report are submitted:", formattedDate);
+    //////////////////////ahs change end
+
+    const lastShowTime = null;
+    const lastHideTime = time;
+    //console.log("lastHideTime", lastHideTime);
+    const visibleDuration = this.visibleDuration + (time - this.lastShowTime);
+
+    return new InteractionTimer(
+      this.firstShowTime,
+      lastShowTime,
+      lastHideTime,
+      visibleDuration,
+      this.firstInteractTime,
+      this.lastInteractTime,
+      this.interactionTimesFormatted,
+      this.interactionTimesUnrelative
+    );
+  }
+
+  withNewInteraction() {
+    const time = Date.now();
+
+    const firstInteractTime =
+      this.firstInteractTime !== null ? this.firstInteractTime : time;
+    const lastInteractTime = time;
+
+    /////a.h.s change: added timestamp for debugging
+    const date1 = new Date(time);
+
+    // Extract date and time components manually
+    const datePart = date1.toLocaleDateString();
+    const timePart = date1.toLocaleTimeString();
+    const milliseconds = String(date1.getMilliseconds()).padStart(3, "0");
+
+    // Combine into the desired format
+    const formattedDate = `${datePart}, ${timePart.slice(
+      0,
+      -3
+    )}.${milliseconds} ${timePart.slice(-2)}`;
+
+    // add the formatted date to interactionTimesFormatted
+    const lastInteractionTemp = this.interactionTimesFormatted.at(-1);
+    const lastInteractionTimeTemp = lastInteractionTemp
+      ? new Date(lastInteractionTemp).getTime()
+      : null;
+
+    // Add the formatted date if it's not already in the array and not within 1ms of the last one
+    if (
+      (!lastInteractionTimeTemp ||
+        Math.abs(time - lastInteractionTimeTemp) > 1) &&
+      !this.interactionTimesFormatted.includes(formattedDate)
+    ) {
+      this.interactionTimesFormatted.push(formattedDate);
+      this.interactionTimesUnrelative.push(time);
+      console.log("Last Interaction", this.interactionTimesFormatted);
+      console.log(
+        "Last Interaction Unrelative",
+        this.interactionTimesUnrelative
+      );
     }
 
-    isCompleted() {
-        return this.firstShowTime !== null && this.lastShowTime === null && this.lastHideTime === null;
+    //////////////////////ahs change end
+
+    return new InteractionTimer(
+      this.firstShowTime,
+      this.lastShowTime,
+      this.lastHideTime,
+      this.visibleDuration,
+      firstInteractTime,
+      lastInteractTime,
+      this.interactionTimesFormatted,
+      this.interactionTimesUnrelative
+    );
+  }
+
+  isCompleted() {
+    return (
+      this.firstShowTime !== null &&
+      this.lastShowTime === null &&
+      this.lastHideTime === null
+    );
+  }
+
+  complete() {
+    const subject = this.lastShowTime === null ? this : this.asHidden();
+
+    const firstShowTime =
+      subject.firstShowTime !== null ? subject.firstShowTime : Date.now();
+    const lastShowTime = null;
+    const lastHideTime = null;
+
+    return new InteractionTimer(
+      firstShowTime,
+      lastShowTime,
+      lastHideTime,
+      subject.visibleDuration,
+      subject.firstInteractTime,
+      subject.lastInteractTime,
+      this.interactionTimesFormatted,
+      this.interactionTimesUnrelative
+    );
+  }
+
+  toJSON() {
+    return {
+      firstShowTime: this.firstShowTime,
+      lastShowTime: this.lastShowTime,
+      lastHideTime: this.lastHideTime,
+      visibleDuration: this.visibleDuration,
+      firstInteractTime: this.firstInteractTime,
+      lastInteractTime: this.lastInteractTime,
+      interactionTimesFormatted: this.interactionTimesFormatted,
+      interactionTimesUnrelative: this.interactionTimesUnrelative,
+    };
+  }
+
+  static fromJSON(json) {
+    const legacyShowTime = json["showTime"];
+    if (legacyShowTime !== undefined) {
+      const legacyHideTime = json["hideTime"];
+
+      const firstShowTime = legacyShowTime;
+      const lastShowTime = null;
+      const lastHideTime = null;
+      const visibleDuration = legacyHideTime - legacyShowTime;
+      const firstInteractTime = json["firstInteractTime"];
+      const lastInteractTime = json["lastInteractTime"];
+      const interactionTimesFormatted = json["interactionTimesFormatted"];
+      const interactionTimesUnrelative = json["interactionTimesUnrelative"];
+
+      return new InteractionTimer(
+        firstShowTime,
+        lastShowTime,
+        lastHideTime,
+        visibleDuration,
+        firstInteractTime,
+        lastInteractTime,
+        interactionTimesFormatted,
+        interactionTimesUnrelative
+      );
     }
 
-    complete() {
-        const subject = (this.lastShowTime === null ? this : this.asHidden());
-
-        const firstShowTime = (subject.firstShowTime !== null ? subject.firstShowTime : Date.now());
-        const lastShowTime = null;
-        const lastHideTime = null;
-
-        return new InteractionTimer(
-            firstShowTime, lastShowTime,
-            lastHideTime, subject.visibleDuration,
-            subject.firstInteractTime, subject.lastInteractTime
-        );
-    }
-
-    toJSON() {
-        return {
-            "firstShowTime": this.firstShowTime,
-            "lastShowTime": this.lastShowTime,
-            "lastHideTime": this.lastHideTime,
-            "visibleDuration": this.visibleDuration,
-            "firstInteractTime": this.firstInteractTime,
-            "lastInteractTime": this.lastInteractTime
-        };
-    }
-
-    static fromJSON(json) {
-        const legacyShowTime = json["showTime"];
-        if (legacyShowTime !== undefined) {
-            const legacyHideTime = json["hideTime"];
-
-            const firstShowTime = legacyShowTime;
-            const lastShowTime = null;
-            const lastHideTime = null;
-            const visibleDuration = legacyHideTime - legacyShowTime;
-            const firstInteractTime = json["firstInteractTime"];
-            const lastInteractTime = json["lastInteractTime"];
-
-            return new InteractionTimer(
-                firstShowTime, lastShowTime,
-                lastHideTime, visibleDuration,
-                firstInteractTime, lastInteractTime
-            );
-        }
-
-        return new InteractionTimer(
-            json["firstShowTime"],
-            json["lastShowTime"],
-            json["lastHideTime"],
-            json["visibleDuration"],
-            json["firstInteractTime"],
-            json["lastInteractTime"],
-        );
-    }
+    return new InteractionTimer(
+      json["firstShowTime"],
+      json["lastShowTime"],
+      json["lastHideTime"],
+      json["visibleDuration"],
+      json["firstInteractTime"],
+      json["lastInteractTime"],
+      json["interactionTimesFormatted"],
+      json["interactionTimesUnrelative"]
+    );
+  }
 }
-
 
 /**
  * Stores the interactions of participants with a comment.
  */
 export class GameCommentInteraction {
-    commentIndex; // Number
-    reactions; // String[]
-    timer; // InteractionTimer
+  commentIndex; // Number
+  reactions; // String[]
+  timer; // InteractionTimer
 
-    constructor(commentIndex, reactions, timer) {
-        doTypeCheck(commentIndex, "number", "Comment ID for Comment Reaction");
-        doArrayTypeCheck(reactions, "string", "Comment Reaction");
-        doTypeCheck(timer, InteractionTimer, "Comment Reaction Timer")
-        this.commentIndex = commentIndex;
-        this.reactions = reactions;
-        this.timer = timer;
+  constructor(commentIndex, reactions, timer) {
+    doTypeCheck(commentIndex, "number", "Comment ID for Comment Reaction");
+    doArrayTypeCheck(reactions, "string", "Comment Reaction");
+    doTypeCheck(timer, InteractionTimer, "Comment Reaction Timer");
+    this.commentIndex = commentIndex;
+    this.reactions = reactions;
+    this.timer = timer;
+  }
+
+  static create(commentIndex, commentReaction, postTimer) {
+    return new GameCommentInteraction(
+      commentIndex,
+      [commentReaction],
+      postTimer.withClearedInteractions().withNewInteraction()
+    );
+  }
+
+  complete() {
+    return new GameCommentInteraction(
+      this.commentIndex,
+      this.reactions,
+      this.timer.complete()
+    );
+  }
+
+  asVisible() {
+    return new GameCommentInteraction(
+      this.commentIndex,
+      this.reactions,
+      this.timer.asVisible()
+    );
+  }
+
+  asHidden() {
+    return new GameCommentInteraction(
+      this.commentIndex,
+      this.reactions,
+      this.timer.asHidden()
+    );
+  }
+
+  withUpdatedTimes(formattedTime, time) {
+    //console.log("Time updated for first post", formattedTime);
+    return new InteractionTimer(
+        this.firstShowTime,
+        this.lastShowTime,
+        this.lastHideTime,
+        this.visibleDuration,
+        this.firstInteractTime,
+        this.lastInteractTime,
+        formattedTime, // Replace the array with a single formatted time
+        time // Replace the array with a single timestamp
+    );
+}
+
+
+  withToggledReaction(reaction, allowMultipleReactions) {
+    return this.withReactions(
+      toggleReactionPresenceInArray(
+        this.reactions,
+        reaction,
+        allowMultipleReactions
+      )
+    );
+  }
+
+  hasReaction(reaction) {
+    return detectReactionPresenceInArray(this.reactions, reaction);
+  }
+
+  withReactions(reactions) {
+    return new GameCommentInteraction(
+      this.commentIndex,
+      reactions,
+      this.timer.withNewInteraction()
+    );
+  }
+
+  toJSON() {
+    return {
+      commentID: this.commentIndex,
+      reactions: this.reactions,
+      timer: this.timer.toJSON(),
+    };
+  }
+
+  static fromJSON(json, showTime) {
+    const reactions = json["reactions"];
+    const reaction = json["reaction"];
+    const timerJSON = json["timer"];
+    const legacyReactTimeMS = json["reactTimeMS"];
+
+    let timer;
+    if (timerJSON !== undefined) {
+      timer = InteractionTimer.fromJSON(timerJSON);
+    } else {
+      timer = new InteractionTimer(
+        showTime,
+        null,
+        null,
+        null,
+        legacyReactTimeMS || null,
+        legacyReactTimeMS || null,
+        null,
+        null
+      );
     }
 
-    static create(commentIndex, commentReaction, postTimer) {
-        return new GameCommentInteraction(
-            commentIndex, [commentReaction],
-            postTimer.withClearedInteractions().withNewInteraction()
-        )
-    }
-
-    complete() {
-        return new GameCommentInteraction(
-            this.commentIndex,
-            this.reactions,
-            this.timer.complete()
-        )
-    }
-
-    asVisible() {
-        return new GameCommentInteraction(
-            this.commentIndex,
-            this.reactions,
-            this.timer.asVisible()
-        )
-    }
-
-    asHidden() {
-        return new GameCommentInteraction(
-            this.commentIndex,
-            this.reactions,
-            this.timer.asHidden()
-        )
-    }
-
-    withToggledReaction(reaction, allowMultipleReactions) {
-        return this.withReactions(toggleReactionPresenceInArray(
-            this.reactions, reaction, allowMultipleReactions
-        ));
-    }
-
-    hasReaction(reaction) {
-        return detectReactionPresenceInArray(this.reactions, reaction);
-    }
-
-    withReactions(reactions) {
-        return new GameCommentInteraction(
-            this.commentIndex,
-            reactions,
-            this.timer.withNewInteraction()
-        );
-    }
-
-    toJSON() {
-        return {
-            "commentID": this.commentIndex,
-            "reactions": this.reactions,
-            "timer": this.timer.toJSON()
-        };
-    }
-
-    static fromJSON(json, showTime) {
-        const reactions = json["reactions"];
-        const reaction = json["reaction"];
-        const timerJSON = json["timer"];
-        const legacyReactTimeMS = json["reactTimeMS"];
-
-        let timer;
-        if (timerJSON !== undefined) {
-            timer = InteractionTimer.fromJSON(timerJSON);
-        } else {
-            timer = new InteractionTimer(
-                showTime, null,
-                null, null,
-                (legacyReactTimeMS || null),
-                (legacyReactTimeMS || null)
-            );
-        }
-
-        return new GameCommentInteraction(
-            json["commentID"],
-            (reactions !== undefined ? reactions : (reaction ? [reaction] : [])),
-            timer
-        );
-    }
+    return new GameCommentInteraction(
+      json["commentID"],
+      reactions !== undefined ? reactions : reaction ? [reaction] : [],
+      timer
+    );
+  }
 }
 
 /**
@@ -446,6 +653,18 @@ export class GamePostInteraction {
       this.selfReportResponses
     );
   }
+  withUpdatedTimes(formattedTime, time) {
+    console.log("Time updated for first post", formattedTime);
+    return new GamePostInteraction(
+      this.postReactions,
+      this.commentReactions,
+      this.lastComment,
+      this.comment,
+      this.timer.withUpdatedTimes(formattedTime, time),
+      this.shareTargets,
+      this.selfReportResponses
+    );
+  }
 
   asVisible() {
     const updatedCommentReactions = [];
@@ -491,9 +710,22 @@ export class GamePostInteraction {
       this.commentReactions,
       this.lastComment,
       this.comment,
-      this.timer.asHidden(),
-      this.shareTargets, 
+      this.timer.withSelfReport(),
+      this.shareTargets,
       selfReportResponses // self-report responses
+    );
+  }
+  withStartSelfReportResponses() {
+    //console.log("on the with", selfReportResponses);
+    //array check / null check omitted
+    return new GamePostInteraction(
+      this.postReactions,
+      this.commentReactions,
+      this.lastComment,
+      this.comment,
+      this.timer.withSelfReport(),
+      this.shareTargets,
+      this.selfReportResponses // self-report responses
     );
   }
 
@@ -725,83 +957,87 @@ export class GamePostInteraction {
  * This is used to store the state of all posts in the feed.
  */
 export class GamePostInteractionStore {
-    postInteractions; // GamePostInteraction[]
+  postInteractions; // GamePostInteraction[]
 
-    constructor(postInteractions, template) {
-        doNullableArrayTypeCheck(postInteractions, GamePostInteraction, "Participant's Interactions with Posts")
-        this.postInteractions = postInteractions || [];
+  constructor(postInteractions, template) {
+    doNullableArrayTypeCheck(
+      postInteractions,
+      GamePostInteraction,
+      "Participant's Interactions with Posts"
+    );
+    this.postInteractions = postInteractions || [];
 
-        // Copy the post interactions from the template.
-        if (template !== undefined) {
-            const templateInteractions = template.postInteractions;
-            for (let index = 0; index < templateInteractions.length; ++index) {
-                const templateInteraction = templateInteractions[index];
-                this.postInteractions.push(templateInteraction);
-            }
-        }
+    // Copy the post interactions from the template.
+    if (template !== undefined) {
+      const templateInteractions = template.postInteractions;
+      for (let index = 0; index < templateInteractions.length; ++index) {
+        const templateInteraction = templateInteractions[index];
+        this.postInteractions.push(templateInteraction);
+      }
     }
+  }
 
-    copy() {
-        return new GamePostInteractionStore(null, this);
-    }
+  copy() {
+    return new GamePostInteractionStore(null, this);
+  }
 
-    static empty() {
-        return new GamePostInteractionStore();
-    }
+  static empty() {
+    return new GamePostInteractionStore();
+  }
 
-    getSubmittedPostsCount() {
-        let submitted = 0;
-        for (let index = 0; index < this.postInteractions.length; ++index) {
-            if (this.postInteractions[index].isCompleted()) {
-                submitted += 1;
-            }
-        }
-        return submitted;
+  getSubmittedPostsCount() {
+    let submitted = 0;
+    for (let index = 0; index < this.postInteractions.length; ++index) {
+      if (this.postInteractions[index].isCompleted()) {
+        submitted += 1;
+      }
     }
+    return submitted;
+  }
 
-    ensureExists(postIndex) {
-        while (postIndex >= this.postInteractions.length) {
-            this.postInteractions.push(GamePostInteraction.empty());
-        }
+  ensureExists(postIndex) {
+    while (postIndex >= this.postInteractions.length) {
+      this.postInteractions.push(GamePostInteraction.empty());
     }
+  }
 
-    get(postIndex) {
-        this.ensureExists(postIndex);
-        return this.postInteractions[postIndex];
-    }
+  get(postIndex) {
+    this.ensureExists(postIndex);
+    return this.postInteractions[postIndex];
+  }
 
-    getCurrentPostIndex() {
-        let highestCompletedIndex = -1;
-        for (let index = 0; index < this.postInteractions.length; ++index) {
-            if (this.postInteractions[index].isCompleted()) {
-                highestCompletedIndex = index;
-            }
-        }
-        return highestCompletedIndex + 1;
+  getCurrentPostIndex() {
+    let highestCompletedIndex = -1;
+    for (let index = 0; index < this.postInteractions.length; ++index) {
+      if (this.postInteractions[index].isCompleted()) {
+        highestCompletedIndex = index;
+      }
     }
+    return highestCompletedIndex + 1;
+  }
 
-    update(postIndex, postInteraction) {
-        const copy = this.copy();
-        copy.ensureExists(postIndex);
-        copy.postInteractions[postIndex] = postInteraction;
-        return copy;
-    }
+  update(postIndex, postInteraction) {
+    const copy = this.copy();
+    copy.ensureExists(postIndex);
+    copy.postInteractions[postIndex] = postInteraction;
+    return copy;
+  }
 
-    toJSON() {
-        const json = [];
-        const interactions = this.postInteractions;
-        for (let index = 0; index < interactions.length; ++index) {
-            const interaction = interactions[index];
-            json.push(interaction.toJSON());
-        }
-        return json;
+  toJSON() {
+    const json = [];
+    const interactions = this.postInteractions;
+    for (let index = 0; index < interactions.length; ++index) {
+      const interaction = interactions[index];
+      json.push(interaction.toJSON());
     }
+    return json;
+  }
 
-    static fromJSON(json) {
-        const interactions = [];
-        for (let index = 0; index < json.length; ++index) {
-            interactions.push(GamePostInteraction.fromJSON(json[index]));
-        }
-        return new GamePostInteractionStore(interactions);
+  static fromJSON(json) {
+    const interactions = [];
+    for (let index = 0; index < json.length; ++index) {
+      interactions.push(GamePostInteraction.fromJSON(json[index]));
     }
+    return new GamePostInteractionStore(interactions);
+  }
 }
