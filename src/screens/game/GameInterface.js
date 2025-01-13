@@ -308,7 +308,7 @@ export class GameScreen extends ActiveGameScreen {
       const inters = prevState.interactions;
 
       // Determine the index to update based on whether the prompt has been shown
-        
+
       const postIndex = prevState.haveShownPrompt ? 39 : 0;
 
       return {
@@ -567,29 +567,34 @@ export class GameScreen extends ActiveGameScreen {
   }
 
   async onNextPost() {
-    console.log("CHECKKCEKKC");
+    console.log("Next post clicked.");
     const game = this.state.game;
     if (!game) throw new Error("There is no active game!");
 
-    // Search by submitted posts.
     const study = game.study;
-    let currentPostIndex = this.getCurrentPostIndex();
+    const currentPostIndex = this.getCurrentPostIndex();
     const shouldShowPromptAgain = currentPostIndex === 39;
+
     console.log("currentPostIndex", currentPostIndex);
-    console.log(shouldShowPromptAgain);
+    console.log("Should show prompt again:", shouldShowPromptAgain);
 
     if (currentPostIndex >= study.basicSettings.length) return;
+
+    try {
+      // Send trigger to fNIRS device
+      console.log("Sending trigger to fNIRS device...");
+      const condition = currentPostIndex + 1; // Example: Use post index as condition
+      const command = `mh${String.fromCharCode(condition)}${String.fromCharCode(
+        0
+      )}`;
+      await sendTriggerToDevice(command);
+    } catch (error) {
+      console.error("Failed to send trigger to fNIRS device:", error);
+    }
 
     if (study.uiSettings.displayPostsInFeed) {
       this.scrollToNextPost(true);
     } else {
-      try {
-        console.log("Sending trigger to fNIRS device");
-        const command = `mh${String.fromCharCode(10)}${String.fromCharCode(0)}`;
-        await sendTriggerToDevice(command);
-      } catch (error) {
-        console.error("Failed to send trigger to fNIRS device:", error);
-      }
       this.setState((state) => {
         const inters = state.interactions;
         return {
@@ -603,11 +608,7 @@ export class GameScreen extends ActiveGameScreen {
             : state.dismissedPrompt,
         };
       });
-
-      ///this.submitPost(currentPostIndex);
     }
-
-    
   }
 
   scrollToNextPost(smoothScroll, postIndex) {
@@ -715,11 +716,7 @@ export class GameScreen extends ActiveGameScreen {
     //   );
     // }
     if (this.state.showRest) {
-      return (
-        <RestScreen
-          onTimeout={this.onRestTimeout}
-        />
-      );
+      return <RestScreen onTimeout={this.onRestTimeout} />;
     }
     if (this.state.showSelfReport) {
       const postIndex = this.getCurrentPostIndex(); // Get the current post index

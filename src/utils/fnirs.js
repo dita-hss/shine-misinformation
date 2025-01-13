@@ -4,18 +4,20 @@ let reader;
 
 export async function connectToDevice() {
   try {
+    // Request port and open connection
     port = await navigator.serial.requestPort();
     await port.open({ baudRate: 115200 });
 
+    // Set up writer and reader
     const textEncoder = new TextEncoderStream();
     const textDecoder = new TextDecoderStream();
 
-    writer = textEncoder.writable.getWriter();
-    reader = textDecoder.readable
-      .pipeThrough(new TextDecoderStream())
-      .getReader();
+    textEncoder.readable.pipeTo(port.writable);
+    reader = port.readable.pipeThrough(textDecoder).getReader();
 
-    console.log("Device connected");
+    writer = textEncoder.writable.getWriter();
+
+    console.log("Device connected successfully.");
   } catch (error) {
     console.error("Failed to connect to device:", error);
   }
@@ -26,18 +28,34 @@ export async function flushDevice() {
     console.error("Device not connected.");
     return;
   }
-  await writer.write("");
+  try {
+    await writer.write("");
+    console.log("Device flushed successfully.");
+  } catch (error) {
+    console.error("Failed to flush device:", error);
+  }
 }
 
 export async function queryDevice() {
-  if (!writer) {
+  if (!writer || !reader) {
     console.error("Device not connected.");
     return false;
   }
 
-  await writer.write("_c1");
-  const queryReturn = await readResponse(5);
-  return queryReturn === "_xid0";
+  try {
+    // Send query
+    await writer.write("_c1");
+    console.log("Query sent to device.");
+
+    // Read response
+    const response = await readResponse(5);
+    console.log("Response from device:", response);
+
+    return response === "_xid0";
+  } catch (error) {
+    console.error("Failed to query device:", error);
+    return false;
+  }
 }
 
 export async function setPulseDuration(duration) {
@@ -46,14 +64,33 @@ export async function setPulseDuration(duration) {
     return;
   }
 
-  const bytes = [
-    getByte(duration, 1),
-    getByte(duration, 2),
-    getByte(duration, 3),
-    getByte(duration, 4),
-  ];
-  const command = `mp${String.fromCharCode(...bytes)}`;
-  await writer.write(command);
+  try {
+    const bytes = [
+      getByte(duration, 1),
+      getByte(duration, 2),
+      getByte(duration, 3),
+      getByte(duration, 4),
+    ];
+    const command = `mp${String.fromCharCode(...bytes)}`;
+    await writer.write(command);
+    console.log("Pulse duration set successfully:", duration);
+  } catch (error) {
+    console.error("Failed to set pulse duration:", error);
+  }
+}
+
+export async function sendTriggerToDevice(command) {
+  if (!writer) {
+    console.error("Device not connected.");
+    return;
+  }
+  try {
+    console.log("Sending command to device:", command);
+    await writer.write(command);
+    console.log("Command sent successfully:", command);
+  } catch (error) {
+    console.error("Failed to send trigger to device:", error);
+  }
 }
 
 function getByte(val, index) {
@@ -62,29 +99,14 @@ function getByte(val, index) {
 
 async function readResponse(length) {
   let result = "";
-  while (result.length < length) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    result += value;
+  try {
+    while (result.length < length) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      result += value;
+    }
+  } catch (error) {
+    console.error("Error reading response:", error);
   }
   return result;
 }
-
-export async function sendTriggerToDevice(command) {
-    console.log("Command sent to device:", command);
-    console.log("port is ready!", port);
-    console.log("writer is ready!", writer);
-    console.log("reader is ready!", reader);
-  if (!writer) {
-    console.error("Device not connected.");
-    return;
-  }
-  try {
-    console.log("awaiting")
-    await writer.write(command);
-    console.log("Command sent to device:", command);
-  } catch (error) {
-    console.error("Failed to send command to device:", error);
-  }
-}
-
