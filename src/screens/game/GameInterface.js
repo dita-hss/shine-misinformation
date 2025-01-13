@@ -145,11 +145,12 @@ export class GameScreen extends ActiveGameScreen {
     super(props, ["introduction-or-game", "game", "debrief"]);
     this.defaultState = {
       ...this.defaultState,
-      showRest: false,
+      showRest: true,
       currentRestIndex: 0,
 
       error: null,
       haveShownPrompt: false,
+      haveShownRest: false,
 
       showSelfReport: false,
       allowReactions: true,
@@ -292,7 +293,6 @@ export class GameScreen extends ActiveGameScreen {
           postIndex,
           inters.get(postIndex).withUpdatedTimes([formattedTime], [time])
         ),
-        showRest: true,
       };
     });
 
@@ -548,6 +548,13 @@ export class GameScreen extends ActiveGameScreen {
     const study = game.study;
     let currentPostIndex = this.getCurrentPostIndex();
 
+    // if currentpost index is 39 AND haveShownPrompt is false, then show the rest again by returning
+  //   if (currentPostIndex === 39 && !this.state.haveShownRest) {
+  //   // Show rest screen before prompt at post 39
+  //   this.setState({ showRest: true , haveShownRest: true});
+  //   return;
+  // }
+
     const shouldShowPromptAgain = currentPostIndex === 39;
     console.log("currentPostIndex", currentPostIndex);
     console.log(shouldShowPromptAgain);
@@ -625,6 +632,12 @@ export class GameScreen extends ActiveGameScreen {
   onSelfReportSubmit = (postIndex, responses) => {
     //console.log("on the self report", responses);
     const currentPostIndex = this.getCurrentPostIndex();
+
+    if (currentPostIndex === 39 && !this.state.haveShownRest) {
+      // Show rest screen before prompt at post 39
+      this.setState({ showRest: true, haveShownRest: true });
+    }
+
     if (currentPostIndex === 59) {
       this.setState({ showRest: true });
     }
@@ -677,7 +690,7 @@ export class GameScreen extends ActiveGameScreen {
     if (this.state.showRest) {
       return (
         <RestScreen
-          onTimeout={this.onRestTimeout} // Pass the timeout handler
+          onTimeout={this.onRestTimeout}
         />
       );
     }
