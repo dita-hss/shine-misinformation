@@ -71,6 +71,10 @@ async function readResponse(length) {
 }
 
 export async function sendTriggerToDevice(command) {
+    console.log("Command sent to device:", command);
+    console.log("port is ready!", port);
+    console.log("writer is ready!", writer);
+    console.log("reader is ready!", reader);
   if (!writer) {
     console.error("Device not connected.");
     return;
