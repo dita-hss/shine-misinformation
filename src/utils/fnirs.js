@@ -2,6 +2,7 @@ let port;
 let writer;
 let reader;
 
+///to do: make dynamic
 export async function connectToDevice() {
   try {
     // request port and open connection

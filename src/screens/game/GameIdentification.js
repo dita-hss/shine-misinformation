@@ -8,6 +8,7 @@ import {
   connectToDevice,
   queryDevice,
   setPulseDuration,
+  sendTriggerToDevice,
 } from "../../utils/fnirs";
 
 
@@ -100,7 +101,22 @@ export class GameIdentification extends ActiveGameScreen {
     });
   }
 
-  submitID(game, id) {
+  async submitID(game, id) {
+
+    // this would mark a rest period
+    try {
+      console.log("Sending trigger to fNIRS device...");
+      const condition = 4;
+      console.log("condition", condition);
+      const command = `mh${String.fromCharCode(condition)}${String.fromCharCode(
+        0
+      )}`;
+      
+      await sendTriggerToDevice(command);
+    } catch (error) {
+      console.error("Failed to send trigger to fNIRS device:", error);
+    }
+
     game.participant.participantID = id;
     game.saveLocally();
   }

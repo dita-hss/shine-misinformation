@@ -304,23 +304,35 @@ export class GameScreen extends ActiveGameScreen {
 
     console.log("update interaction", formattedTime, "time", time);
 
-    this.setState((prevState) => {
-      const inters = prevState.interactions;
+    const postIndex = this.state.haveShownPrompt ? 39 : 0;
+    const updatedInteractions = this.state.interactions.update(
+      postIndex,
+      this.state.interactions
+        .get(postIndex)
+        .withUpdatedTimes([formattedTime], [time])
+    );
 
-      // Determine the index to update based on whether the prompt has been shown
-
-      const postIndex = prevState.haveShownPrompt ? 39 : 0;
-
-      return {
-        ...prevState,
-        dismissedPrompt: true,
-        haveShownPrompt: true, // Mark the prompt as shown
-        interactions: inters.update(
-          postIndex,
-          inters.get(postIndex).withUpdatedTimes([formattedTime], [time])
-        ),
-      };
+    this.setState({
+      dismissedPrompt: true,
+      haveShownPrompt: true,
+      interactions: updatedInteractions,
     });
+
+    //async operations after updating the state
+    const condition = postIndex === 39 ? 3 : 1;
+    const command = `mh${String.fromCharCode(condition)}${String.fromCharCode(
+      0
+    )}`;
+    console.log("condition", condition);
+
+    console.log("Sending trigger to fNIRS device...");
+    sendTriggerToDevice(command)
+      .then(() => {
+        console.log("Trigger sent successfully");
+      })
+      .catch((error) => {
+        console.error("Failed to send trigger to fNIRS device:", error);
+      });
 
     if (!study.uiSettings.displayPostsInFeed) {
       this.startReactDelay();
@@ -580,16 +592,16 @@ export class GameScreen extends ActiveGameScreen {
 
     if (currentPostIndex >= study.basicSettings.length) return;
 
-    try {
-      console.log("Sending trigger to fNIRS device...");
-      const condition = currentPostIndex + 1;
-      const command = `mh${String.fromCharCode(condition)}${String.fromCharCode(
-        0
-      )}`;
-      await sendTriggerToDevice(command);
-    } catch (error) {
-      console.error("Failed to send trigger to fNIRS device:", error);
-    }
+    // try {
+    //   console.log("Sending trigger to fNIRS device...");
+    //   const condition = currentPostIndex + 1;
+    //   const command = `mh${String.fromCharCode(condition)}${String.fromCharCode(
+    //     0
+    //   )}`;
+    //   await sendTriggerToDevice(command);
+    // } catch (error) {
+    //   console.error("Failed to send trigger to fNIRS device:", error);
+    // }
 
     if (study.uiSettings.displayPostsInFeed) {
       this.scrollToNextPost(true);
@@ -657,11 +669,11 @@ export class GameScreen extends ActiveGameScreen {
 
   ////////////////a.h.s change: added the following functions to save the state of the game
   onSelfReportSubmit = (postIndex, responses) => {
-    //console.log("on the self report", responses);
+    // Get the current post index
     const currentPostIndex = this.getCurrentPostIndex();
 
+    // Handle rest screen conditions
     if (currentPostIndex === 39 && !this.state.haveShownRest) {
-      // Show rest screen before prompt at post 39
       this.setState({ showRest: true, haveShownRest: true });
     }
 
@@ -669,24 +681,44 @@ export class GameScreen extends ActiveGameScreen {
       this.setState({ showRest: true });
     }
 
-    // Update interactions and set showSelfReport to false, then call onNextPost
-    this.setState(
-      (state) => {
-        const inters = state.interactions;
-        return {
-          interactions: inters.update(
-            postIndex,
-            inters.get(postIndex).withSelfReportResponses(responses)
-          ),
-          showSelfReport: false, // Hide SelfReport screen
-        };
-      },
-      () => {
-        //this.onNextPost();
-        const currentPostIndex = this.getCurrentPostIndex();
-        this.submitPost(currentPostIndex);
-      }
-    );
+    // Update interactions and set `showSelfReport` to false
+    this.setState((state) => {
+      const inters = state.interactions;
+      return {
+        interactions: inters.update(
+          postIndex,
+          inters.get(postIndex).withSelfReportResponses(responses)
+        ),
+        showSelfReport: false, // Hide SelfReport screen
+      };
+    });
+
+    // if the current post index is between 0 and 19, condition is 1, 
+    // if the current post index is between 20 and 39, condition is 2,
+    // if the current post index is between 40 and 59, condition is 3
+    let condition = 1;
+    if (currentPostIndex >= 20 && currentPostIndex < 40) {
+      condition = 2;
+    } else if (currentPostIndex >= 40) {
+      condition = 3;
+    }
+    console.log("condition", condition);
+    const command = `mh${String.fromCharCode(condition)}${String.fromCharCode(
+      0
+    )}`;
+
+    console.log("Sending trigger to fNIRS device...");
+    sendTriggerToDevice(command)
+      .then(() => {
+        console.log("Trigger sent successfully.");
+      })
+      .catch((error) => {
+        console.error("Failed to send trigger to fNIRS device:", error);
+      });
+
+    // Submit the post after async operation
+    const nextPostIndex = this.getCurrentPostIndex();
+    this.submitPost(nextPostIndex);
   };
 
   onShareTargetSelect(postIndex, target) {
