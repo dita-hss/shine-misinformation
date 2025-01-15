@@ -121,6 +121,7 @@ export async function sendTrigger(postIndex) {
     const command = `mh${String.fromCharCode(condition)}${String.fromCharCode(0)}`;
     console.log("Command to send:", command);
 
+    await flushDevice();
     await sendTriggerToDevice(command);
     console.log("Command sent successfully.");
   } catch (error) {
