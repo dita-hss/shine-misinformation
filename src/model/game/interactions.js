@@ -131,7 +131,7 @@ export class InteractionTimer {
     );
   }
 
-  asVisible() {
+  async asVisible() {
     // Already visible.
     if (this.lastShowTime !== null) return this;
 
@@ -172,6 +172,19 @@ export class InteractionTimer {
         "When the post is first shown:",
         this.interactionTimesFormatted
       );
+      // this would mark a rest period
+    try {
+      console.log("Sending trigger to fNIRS device...");
+      const condition = 4;
+      console.log("condition", condition);
+      const command = `mh${String.fromCharCode(condition)}${String.fromCharCode(
+        0
+      )}`;
+      
+      await sendTriggerToDevice(command);
+    } catch (error) {
+      console.error("Failed to send trigger to fNIRS device:", error);
+    }
     }
     //////////////////////ahs change end
 
