@@ -24,18 +24,18 @@ export async function connectToDevice() {
   }
 }
 
-// export async function flushDevice() {
-//   if (!writer) {
-//     console.error("Device not connected.");
-//     return;
-//   }
-//   try {
-//     await writer.write("");
-//     console.log("Device flushed successfully.");
-//   } catch (error) {
-//     console.error("Failed to flush device:", error);
-//   }
-// }
+export async function flushDevice() {
+  if (!writer) {
+    console.error("Device not connected.");
+    return;
+  }
+  try {
+    await writer.write("");
+    console.log("Device flushed successfully.");
+  } catch (error) {
+    console.error("Failed to flush device:", error);
+  }
+}
 
 export async function queryDevice() {
   if (!writer || !reader) {
@@ -112,37 +112,14 @@ async function readResponse(length) {
   return result;
 }
 
-export async function flushDevice() {
-  if (!writer || !reader) {
-    console.error("Device not connected.");
-    return;
-  }
-
-  try {
-    console.log("Flushing device...");
-    await writer.write("");
-    console.log("Output buffer cleared.");
-
-    let done = false;
-    while (!done) {
-      const { value, done: isDone } = await reader.read();
-      done = isDone || !value;
-    }
-    console.log("Input buffer cleared.");
-    console.log("Device flushed successfully.");
-  } catch (error) {
-    console.error("Failed to flush device:", error);
-  }
-}
-
 
 export async function sendTrigger(postIndex) {
   try {
     console.log("Preparing to send trigger...");
-    const condition = 1;
+    const condition = Math.floor(postIndex / 20) + 1;
     console.log("Post index:", postIndex, "Condition:", condition);
 
-    const command = `mh${String.fromCharCode(condition)}${String.fromCharCode(0)}`;
+    const command = `mh${String.fromCharCode(postIndex)}${String.fromCharCode(0)}`;
     console.log("Command to send:", command);
 
     await flushDevice();
