@@ -668,58 +668,46 @@ export class GameScreen extends ActiveGameScreen {
   // };
 
   ////////////////a.h.s change: added the following functions to save the state of the game
-  onSelfReportSubmit = (postIndex, responses) => {
-    // Get the current post index
-    const currentPostIndex = this.getCurrentPostIndex();
+  async onSelfReportSubmit(postIndex, responses) {
+    try {
+      const currentPostIndex = this.getCurrentPostIndex();
 
-    // Handle rest screen conditions
-    if (currentPostIndex === 39 && !this.state.haveShownRest) {
-      this.setState({ showRest: true, haveShownRest: true });
-    }
+      if (currentPostIndex === 39 && !this.state.haveShownRest) {
+        this.setState({ showRest: true, haveShownRest: true });
+      }
 
-    if (currentPostIndex === 59) {
-      this.setState({ showRest: true });
-    }
+      if (currentPostIndex === 59) {
+        this.setState({ showRest: true });
+      }
 
-    // Update interactions and set `showSelfReport` to false
-    this.setState((state) => {
-      const inters = state.interactions;
-      return {
-        interactions: inters.update(
-          postIndex,
-          inters.get(postIndex).withSelfReportResponses(responses)
-        ),
-        showSelfReport: false, // Hide SelfReport screen
-      };
-    });
-
-    // if the current post index is between 0 and 19, condition is 1, 
-    // if the current post index is between 20 and 39, condition is 2,
-    // if the current post index is between 40 and 59, condition is 3
-    let condition = 1;
-    if (currentPostIndex >= 20 && currentPostIndex < 40) {
-      condition = 2;
-    } else if (currentPostIndex >= 40) {
-      condition = 3;
-    }
-    console.log("condition", condition);
-    const command = `mh${String.fromCharCode(condition)}${String.fromCharCode(
-      0
-    )}`;
-
-    console.log("Sending trigger to fNIRS device...");
-    sendTriggerToDevice(command)
-      .then(() => {
-        console.log("Trigger sent successfully.");
-      })
-      .catch((error) => {
-        console.error("Failed to send trigger to fNIRS device:", error);
+      this.setState((state) => {
+        const inters = state.interactions;
+        return {
+          interactions: inters.update(
+            postIndex,
+            inters.get(postIndex).withSelfReportResponses(responses)
+          ),
+          showSelfReport: false,
+        };
       });
 
-    // Submit the post after async operation
+      const condition =
+        currentPostIndex >= 40 ? 3 : currentPostIndex >= 20 ? 2 : 1;
+      const command = `mh${String.fromCharCode(condition)}${String.fromCharCode(
+        0
+      )}`;
+
+      console.log("Sending trigger to fNIRS device...");
+      console.log("condition", condition);
+      await sendTriggerToDevice(command);
+      console.log("Trigger sent successfully.");
+    } catch (error) {
+      console.error("Failed to send trigger to fNIRS device:", error);
+    }
+
     const nextPostIndex = this.getCurrentPostIndex();
     this.submitPost(nextPostIndex);
-  };
+  }
 
   onShareTargetSelect(postIndex, target) {
     this.setState((state) => {
