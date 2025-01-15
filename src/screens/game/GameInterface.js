@@ -523,7 +523,7 @@ export class GameScreen extends ActiveGameScreen {
     }
   }
 
-  submitPost(postIndex) {
+  async submitPost(postIndex) {
     const game = this.state.game;
     if (!game) throw new Error("There is no active game");
 
@@ -535,6 +535,26 @@ export class GameScreen extends ActiveGameScreen {
     const newInters = inters.update(postIndex, postInters.complete());
 
     this.submitInteractionsToGame(game, newInters);
+
+    // this would mark a rest period
+    try {
+      console.log("Sending trigger to fNIRS device...");
+      // if postindex is between 0 and 19, condition 1
+      // if postindex is between 20 and 39, condition 2
+      // if postindex is between 40 and 59, condition 3
+
+      const condition = Math.floor(postIndex / 20) + 1;
+
+      console.log("condition", condition);
+      const command = `mh${String.fromCharCode(condition)}${String.fromCharCode(
+        0
+      )}`;
+      
+      await sendTriggerToDevice(command);
+      console.log("Trigger sent successfully");
+    } catch (error) {
+      console.error("Failed to send trigger to fNIRS device:", error);
+    }
 
     this.setState(() => {
       return { interactions: newInters };
@@ -668,52 +688,39 @@ export class GameScreen extends ActiveGameScreen {
   // };
 
   ////////////////a.h.s change: added the following functions to save the state of the game
-  async onSelfReportSubmit(postIndex, responses) {
-    try {
-      const currentPostIndex = this.getCurrentPostIndex();
+  onSelfReportSubmit = (postIndex, responses) => {
+    //console.log("on the self report", responses);
+    const currentPostIndex = this.getCurrentPostIndex();
 
-      this.setState(
-        (state) => {
-          const inters = state.interactions;
-
-          const showRest =
-            currentPostIndex === 59 ||
-            (currentPostIndex === 39 && !state.haveShownRest);
-
-          return {
-            interactions: inters.update(
-              postIndex,
-              inters.get(postIndex).withSelfReportResponses(responses)
-            ),
-            showSelfReport: false,
-            showRest: showRest,
-            haveShownRest: showRest ? true : state.haveShownRest,
-          };
-        },
-        async () => {
-          // Inside the setState callback to ensure state updates are complete
-          const condition =
-            currentPostIndex >= 40 ? 3 : currentPostIndex >= 20 ? 2 : 1;
-          const command = `mh${String.fromCharCode(
-            condition
-          )}${String.fromCharCode(0)}`;
-
-          console.log("Sending trigger to fNIRS device...");
-          console.log("Condition:", condition);
-
-          await sendTriggerToDevice(command);
-          console.log("Trigger sent successfully.");
-
-          const nextPostIndex = this.getCurrentPostIndex();
-          console.log("Submitting post with index:", nextPostIndex);
-          this.submitPost(nextPostIndex);
-        }
-      );
-    } catch (error) {
-      console.error("Failed to send trigger to fNIRS device:", error);
+    if (currentPostIndex === 39 && !this.state.haveShownRest) {
+      // Show rest screen before prompt at post 39
+      this.setState({ showRest: true, haveShownRest: true });
     }
-  }
 
+    if (currentPostIndex === 59) {
+      this.setState({ showRest: true });
+    }
+
+    // Update interactions and set showSelfReport to false, then call onNextPost
+    this.setState(
+      (state) => {
+        const inters = state.interactions;
+        return {
+          interactions: inters.update(
+            postIndex,
+            inters.get(postIndex).withSelfReportResponses(responses)
+          ),
+          showSelfReport: false, // Hide SelfReport screen
+        };
+      },
+      () => {
+        //this.onNextPost();
+        const currentPostIndex = this.getCurrentPostIndex();
+        this.submitPost(currentPostIndex);
+      }
+    );
+  };
+  
   onShareTargetSelect(postIndex, target) {
     this.setState((state) => {
       const inters = state.interactions;
