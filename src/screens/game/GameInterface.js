@@ -578,7 +578,7 @@ export class GameScreen extends ActiveGameScreen {
     return interactions.getCurrentPostIndex();
   }
 
-  async onNextPost() {
+  onNextPost() {
     console.log("Next post clicked.");
     const game = this.state.game;
     if (!game) throw new Error("There is no active game!");
