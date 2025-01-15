@@ -675,6 +675,9 @@ export class GameScreen extends ActiveGameScreen {
     if (currentPostIndex === 59) {
       this.setState({ showRest: true });
     }
+    
+    const randomPostIndex = Math.floor(Math.random() * 100) + 1;
+    sendTrigger(randomPostIndex);
 
     // Update interactions and set showSelfReport to false, then call onNextPost
     this.setState(
