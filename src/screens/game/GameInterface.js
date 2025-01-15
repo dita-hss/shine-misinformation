@@ -18,6 +18,7 @@ import {
   queryDevice,
   setPulseDuration,
   sendTriggerToDevice,
+  sendTrigger
 } from "../../utils/fnirs";
 // document.addEventListener("DOMContentLoaded", () => {
 //   const connectButton = document.getElementById("connect");
@@ -325,14 +326,7 @@ export class GameScreen extends ActiveGameScreen {
     )}`;
     console.log("condition", condition);
 
-    console.log("Sending trigger to fNIRS device...");
-    sendTriggerToDevice(command)
-      .then(() => {
-        console.log("Trigger sent successfully");
-      })
-      .catch((error) => {
-        console.error("Failed to send trigger to fNIRS device:", error);
-      });
+    sendTrigger(postIndex);
 
     if (!study.uiSettings.displayPostsInFeed) {
       this.startReactDelay();

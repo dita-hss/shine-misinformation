@@ -10,6 +10,7 @@ import {
   queryDevice,
   setPulseDuration,
   sendTriggerToDevice,
+  sendTrigger
 } from "../../utils/fnirs";
 
 function toggleReactionPresenceInArray(
@@ -179,28 +180,7 @@ export class InteractionTimer {
         "When the post is first shown:",
         this.interactionTimesFormatted
       );
-      try {
-        console.log("Sending trigger to fNIRS device...");
-        // Determine the condition based on postIndex ranges
-        
-        const condition = 11;
-
-        console.log("Condition:", condition);
-        const command = `mh${String.fromCharCode(
-          condition
-        )}${String.fromCharCode(0)}`;
-
-        // Await the async trigger
-        sendTriggerToDevice(command)
-          .then(() => {
-            console.log("Trigger sent successfully.");
-          })
-          .catch((error) => {
-            console.error("Failed to send trigger to fNIRS device:", error);
-          });
-      } catch (error) {
-        console.error("Error while sending trigger:", error);
-      }
+      sendTrigger(1);
     }
     //////////////////////ahs change end
 

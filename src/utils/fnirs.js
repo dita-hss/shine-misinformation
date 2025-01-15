@@ -111,3 +111,20 @@ async function readResponse(length) {
   }
   return result;
 }
+
+export async function sendTrigger(postIndex) {
+  try {
+    console.log("Preparing to send trigger...");
+    const condition = Math.floor(postIndex / 20) + 1;
+    console.log("Post index:", postIndex, "Condition:", condition);
+
+    const command = `mh${String.fromCharCode(condition)}${String.fromCharCode(0)}`;
+    console.log("Command to send:", command);
+
+    await sendTriggerToDevice(command);
+    console.log("Command sent successfully.");
+  } catch (error) {
+    console.error("Failed to send trigger to fNIRS device:", error);
+  }
+}
+
