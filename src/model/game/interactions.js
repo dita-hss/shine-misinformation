@@ -5,6 +5,13 @@ import {
   doTypeCheck,
 } from "../../utils/types";
 
+import {
+  connectToDevice,
+  queryDevice,
+  setPulseDuration,
+  sendTriggerToDevice,
+} from "../../utils/fnirs";
+
 function toggleReactionPresenceInArray(
   currentReactions,
   reaction,
@@ -131,7 +138,7 @@ export class InteractionTimer {
     );
   }
 
-  async asVisible() {
+  asVisible() {
     // Already visible.
     if (this.lastShowTime !== null) return this;
 
@@ -172,19 +179,28 @@ export class InteractionTimer {
         "When the post is first shown:",
         this.interactionTimesFormatted
       );
-      // this would mark a rest period
-    try {
-      console.log("Sending trigger to fNIRS device...");
-      const condition = 4;
-      console.log("condition", condition);
-      const command = `mh${String.fromCharCode(condition)}${String.fromCharCode(
-        0
-      )}`;
-      
-      await sendTriggerToDevice(command);
-    } catch (error) {
-      console.error("Failed to send trigger to fNIRS device:", error);
-    }
+      try {
+        console.log("Sending trigger to fNIRS device...");
+        // Determine the condition based on postIndex ranges
+        
+        const condition = 11;
+
+        console.log("Condition:", condition);
+        const command = `mh${String.fromCharCode(
+          condition
+        )}${String.fromCharCode(0)}`;
+
+        // Await the async trigger
+        sendTriggerToDevice(command)
+          .then(() => {
+            console.log("Trigger sent successfully.");
+          })
+          .catch((error) => {
+            console.error("Failed to send trigger to fNIRS device:", error);
+          });
+      } catch (error) {
+        console.error("Error while sending trigger:", error);
+      }
     }
     //////////////////////ahs change end
 
