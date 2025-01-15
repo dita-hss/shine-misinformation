@@ -691,6 +691,9 @@ export class GameScreen extends ActiveGameScreen {
         };
       });
 
+      const nextPostIndex = this.getCurrentPostIndex();
+      this.submitPost(nextPostIndex);
+
       const condition =
         currentPostIndex >= 40 ? 3 : currentPostIndex >= 20 ? 2 : 1;
       const command = `mh${String.fromCharCode(condition)}${String.fromCharCode(
@@ -705,8 +708,7 @@ export class GameScreen extends ActiveGameScreen {
       console.error("Failed to send trigger to fNIRS device:", error);
     }
 
-    const nextPostIndex = this.getCurrentPostIndex();
-    this.submitPost(nextPostIndex);
+    
   }
 
   onShareTargetSelect(postIndex, target) {
