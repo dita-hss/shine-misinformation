@@ -470,12 +470,38 @@ export class GameScreen extends ActiveGameScreen {
       );
     }
 
+    // New trigger logic
+    try {
+      console.log("Sending trigger to fNIRS device...");
+      // Determine the condition based on postIndex ranges
+      const postIndex = inters.getCurrentPostIndex();
+      const condition = Math.floor(postIndex / 20) + 1;
+
+      console.log("Condition:", condition);
+      const command = `mh${String.fromCharCode(condition)}${String.fromCharCode(
+        0
+      )}`;
+
+      // Await the async trigger
+      sendTriggerToDevice(command)
+        .then(() => {
+          console.log("Trigger sent successfully.");
+        })
+        .catch((error) => {
+          console.error("Failed to send trigger to fNIRS device:", error);
+        });
+    } catch (error) {
+      console.error("Error while sending trigger:", error);
+    }
+
+    // State updates
     this.setStateIfMounted(() => {
       return {
         followerChange: followerChange,
         credibilityChange: credibilityChange,
       };
     });
+
     if (this.changeTimeoutID) {
       clearTimeout(this.changeTimeoutID);
       this.changeTimeoutID = null;
@@ -523,7 +549,7 @@ export class GameScreen extends ActiveGameScreen {
     }
   }
 
-  async submitPost(postIndex) {
+  submitPost(postIndex) {
     const game = this.state.game;
     if (!game) throw new Error("There is no active game");
 
@@ -535,26 +561,6 @@ export class GameScreen extends ActiveGameScreen {
     const newInters = inters.update(postIndex, postInters.complete());
 
     this.submitInteractionsToGame(game, newInters);
-
-    // this would mark a rest period
-    try {
-      console.log("Sending trigger to fNIRS device...");
-      // if postindex is between 0 and 19, condition 1
-      // if postindex is between 20 and 39, condition 2
-      // if postindex is between 40 and 59, condition 3
-
-      const condition = Math.floor(postIndex / 20) + 1;
-
-      console.log("condition", condition);
-      const command = `mh${String.fromCharCode(condition)}${String.fromCharCode(
-        0
-      )}`;
-      
-      await sendTriggerToDevice(command);
-      console.log("Trigger sent successfully");
-    } catch (error) {
-      console.error("Failed to send trigger to fNIRS device:", error);
-    }
 
     this.setState(() => {
       return { interactions: newInters };
@@ -720,7 +726,7 @@ export class GameScreen extends ActiveGameScreen {
       }
     );
   };
-  
+
   onShareTargetSelect(postIndex, target) {
     this.setState((state) => {
       const inters = state.interactions;
