@@ -180,7 +180,9 @@ export class InteractionTimer {
         "When the post is first shown:",
         this.interactionTimesFormatted
       );
-      sendTrigger(1);
+      const randomPostIndex = Math.floor(Math.random() * 100) + 1;
+
+      sendTrigger(randomPostIndex);
     }
     //////////////////////ahs change end
 

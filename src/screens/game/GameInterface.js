@@ -325,8 +325,9 @@ export class GameScreen extends ActiveGameScreen {
       0
     )}`;
     console.log("condition", condition);
+    const randomPostIndex = Math.floor(Math.random() * 59) + 1;
+    sendTrigger(randomPostIndex);
 
-    sendTrigger(postIndex);
 
     if (!study.uiSettings.displayPostsInFeed) {
       this.startReactDelay();
