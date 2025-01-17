@@ -669,12 +669,12 @@ export class GameScreen extends ActiveGameScreen {
     if (currentPostIndex === 39 && !this.state.haveShownRest) {
       // Show rest screen before prompt at post 39
       this.setState({ showRest: true, haveShownRest: true });
-      sendTrigger(-1);
+      //sendTrigger(-1);
     }
 
     if (currentPostIndex === 59) {
       this.setState({ showRest: true });
-      sendTrigger(-1);
+      //sendTrigger(-1);
     }
     
     sendTrigger(currentPostIndex);
