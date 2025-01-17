@@ -1,6 +1,7 @@
 let port;
 let writer;
 let reader;
+let currentCondition = 1;
 
 ///to do: make dynamic
 export async function connectToDevice() {
@@ -44,11 +45,9 @@ export async function queryDevice() {
   }
 
   try {
-    // Send query
     await writer.write("_c1");
     console.log("Query sent to device.");
 
-    // Read response
     const response = await readResponse(5);
     console.log("Response from device:", response);
 
@@ -112,21 +111,23 @@ async function readResponse(length) {
   return result;
 }
 
-
 export async function sendTrigger(postIndex) {
   try {
     console.log("Preparing to send trigger...");
-    const condition = Math.floor(postIndex / 20) + 1;
-    console.log("Post index:", postIndex, "Condition:", condition);
 
-    const command = `mh${String.fromCharCode(postIndex)}${String.fromCharCode(0)}`;
+    console.log("Post index:", postIndex, "Condition:", currentCondition);
+
+    const command = `mh${String.fromCharCode(currentCondition)}${String.fromCharCode(0)}`;
     console.log("Command to send:", command);
 
     await flushDevice();
     await sendTriggerToDevice(command);
+
     console.log("Command sent successfully.");
+
+    currentCondition++;
   } catch (error) {
-    console.error("Failed to send trigger to fNIRS device:", error);
+    console.error("Failed to send trigger to device:", error);
   }
 }
 

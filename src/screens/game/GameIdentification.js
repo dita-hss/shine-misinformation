@@ -105,7 +105,7 @@ export class GameIdentification extends ActiveGameScreen {
   async submitID(game, id) {
 
     // this would mark a rest period
-    sendTrigger(1);
+    sendTrigger(-1);
 
     game.participant.participantID = id;
     game.saveLocally();

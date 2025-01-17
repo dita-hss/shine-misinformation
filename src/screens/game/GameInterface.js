@@ -324,9 +324,8 @@ export class GameScreen extends ActiveGameScreen {
     const command = `mh${String.fromCharCode(condition)}${String.fromCharCode(
       0
     )}`;
-    console.log("condition", condition);
-    const randomPostIndex = Math.floor(Math.random() * 59) + 1;
-    sendTrigger(randomPostIndex);
+
+    sendTrigger(this.getCurrentPostIndex());
 
 
     if (!study.uiSettings.displayPostsInFeed) {
@@ -670,14 +669,15 @@ export class GameScreen extends ActiveGameScreen {
     if (currentPostIndex === 39 && !this.state.haveShownRest) {
       // Show rest screen before prompt at post 39
       this.setState({ showRest: true, haveShownRest: true });
+      sendTrigger(-1);
     }
 
     if (currentPostIndex === 59) {
       this.setState({ showRest: true });
+      sendTrigger(-1);
     }
     
-    const randomPostIndex = Math.floor(Math.random() * 100) + 1;
-    sendTrigger(randomPostIndex);
+    sendTrigger(currentPostIndex);
 
     // Update interactions and set showSelfReport to false, then call onNextPost
     this.setState(
