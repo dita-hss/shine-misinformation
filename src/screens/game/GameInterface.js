@@ -659,13 +659,13 @@ export class GameScreen extends ActiveGameScreen {
     //console.log("on the self report", responses);
     const currentPostIndex = this.getCurrentPostIndex();
 
-    if (currentPostIndex === 39 && !this.state.haveShownRest) {
+    if (currentPostIndex === 40 && !this.state.haveShownRest) {
       // Show rest screen before prompt at post 39
       this.setState({ showRest: true, haveShownRest: true });
       //sendTrigger(-1);
     }
 
-    if (currentPostIndex === 59) {
+    if (currentPostIndex === 60) {
       this.setState({ showRest: true });
       //sendTrigger(-1);
     }
@@ -789,33 +789,40 @@ export class GameScreen extends ActiveGameScreen {
           postID = "post-" + state.indexInGame;
 
         postComponents.push(
-          <PostComponent
-            id={postID}
-            key={postID}
-            state={state}
-            onPostReact={(r) => this.onPostReaction(postIndex, r, study)}
-            onCommentReact={(i, r) =>
-              this.onCommentReaction(postIndex, i, r, study)
-            }
-            onCommentSubmit={(value) => this.onCommentSubmit(postIndex, value)}
-            onCommentEdit={() => this.onCommentEdit(postIndex)}
-            onCommentDelete={() => this.onCommentDelete(postIndex)}
-            enabled={reactionsAllowed}
-            interactions={interaction}
-            className={
-              study.uiSettings.displayPostsInFeed ? "mt-6 scroll-mt-4" : ""
-            }
-            ////////////////a.h.s change: added the following props
-            onShareTargetSelect={(target) =>
-              this.onShareTargetSelect(postIndex, target)
-            }
-          />
+          <div
+            key={postIndex}
+            className="max-w-xl mx-auto p-6 bg-white shadow-xl rounded-xl transition-opacity"
+          >
+            <PostComponent
+              id={postID}
+              key={postID}
+              state={state}
+              onPostReact={(r) => this.onPostReaction(postIndex, r, study)}
+              onCommentReact={(i, r) =>
+                this.onCommentReaction(postIndex, i, r, study)
+              }
+              onCommentSubmit={(value) =>
+                this.onCommentSubmit(postIndex, value)
+              }
+              onCommentEdit={() => this.onCommentEdit(postIndex)}
+              onCommentDelete={() => this.onCommentDelete(postIndex)}
+              enabled={reactionsAllowed}
+              interactions={interaction}
+              className={
+                study.uiSettings.displayPostsInFeed ? "mt-6 scroll-mt-4" : ""
+              }
+              ////////////////a.h.s change: added the following props
+              onShareTargetSelect={(target) =>
+                this.onShareTargetSelect(postIndex, target)
+              }
+            />
+          </div>
         );
       }
     }
 
     return (
-      <>
+      <div className="flex flex-col items-center justify-center bg-gray-100 min-h-screen py-10">
         {displayPrompt && (
           <GamePrompt
             study={study}
@@ -826,19 +833,17 @@ export class GameScreen extends ActiveGameScreen {
             }}
           />
         )}
+        <div className="flex justify-center w-full">
+          <div className="w-full max-w-2xl flex justify-center">
+            <div className="flex flex-col items-center w-full">
+              {postComponents}
+            </div>
+          </div>
+        </div>
 
-        <div
-          className={
-            "flex flex-row items-start w-full bg-gray-100 "
-            //(displayPrompt ? " filter blur " : "")
-          }
-          style={{ minHeight: "100vh" }}
-        >
-          {/* Space to the left. */}
-          <div className="flex-1" />
-          {/* Progress. */}
-          {/* ///a.h.s change 2 */}
-          {participant && !error && (
+        {/* Progress. */}
+        {/* ///a.h.s change 2 */}
+        {/* {participant && !error && (
             <ParticipantProgress
               displayFollowers={study.uiSettings.displayFollowers}
               displayCredibility={study.uiSettings.displayCredibility}
@@ -868,38 +873,45 @@ export class GameScreen extends ActiveGameScreen {
               followerChange={this.state.followerChange}
               credibilityChange={this.state.credibilityChange}
             />
-          )}
-          {/* Space in the middle. */}
-          <div className="flex-1 max-w-mini" />
-          {/* The posts and their associated comments. */}
-          <div
-            id="post-feed"
-            className="relative bg-gray-200 w-full md:max-w-xl
-                                    md:border-l-2 md:border-r-2 md:border-gray-700 shadow-2xl"
-            style={{ minHeight: "100vh" }}
-          >
-            {/* Post, reactions, and comments. */}
-            {postComponents}
+          )} */}
 
-            {/* The end of the feed. */}
-            {!displayGameEnd && study.uiSettings.displayPostsInFeed && (
-              <FeedEnd onContinue={() => this.submitAll(game)} />
-            )}
-
-            {/* If the game is finished, display a game completed prompt. */}
-            {displayGameEnd && <GameFinished study={study} game={game} />}
-
-            {/* If there is an error, display it here. */}
-            {error && <ErrorLabel value={error} />}
-
-            {/* Used for reserving space below reactions and progress. */}
-            <div className="h-56 md:h-8" />
+        {/* Continue Button - Also Centered */}
+        {participant && !displayGameEnd && (
+          <div className="mt-6 w-full max-w-lg flex justify-center">
+            <button
+              className={`w-full text-white font-semibold py-3 rounded-lg transition-all 
+                        ${
+                          nextPostEnabled && reactionsAllowed
+                            ? "bg-blue-600 hover:bg-blue-700 active:scale-95"
+                            : "bg-gray-400 cursor-not-allowed"
+                        }`}
+              onClick={() =>
+                nextPostEnabled && reactionsAllowed && this.onNextPost()
+              }
+              disabled={!nextPostEnabled || !reactionsAllowed}
+            >
+              {nextPostEnabled ? "Continue" : nextPostError}
+            </button>
           </div>
-          {/* Space to the right. */}
-          <div className="flex-1" />
-          <div className="flex-1" />
-        </div>
-      </>
+        )}
+
+        {/* Post, reactions, and comments. */}
+        {/* {postComponents} */}
+
+        {/* The end of the feed. */}
+        {!displayGameEnd && study.uiSettings.displayPostsInFeed && (
+          <FeedEnd onContinue={() => this.submitAll(game)} />
+        )}
+
+        {/* If the game is finished, display a game completed prompt. */}
+        {displayGameEnd && <GameFinished study={study} game={game} />}
+
+        {/* If there is an error, display it here. */}
+        {error && <ErrorLabel value={error} />}
+
+        {/* Used for reserving space below reactions and progress. */}
+        <div className="h-56 md:h-8" />
+      </div>
     );
   }
 }
