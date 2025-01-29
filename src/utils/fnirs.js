@@ -115,9 +115,12 @@ export async function sendTrigger(postIndex) {
   try {
     console.log("Preparing to send trigger...");
 
-    console.log("Post index:", postIndex, "Condition:", currentCondition);
+    const conditionCode = getConditionCode(currentCondition);
 
-    const command = `mh${String.fromCharCode(currentCondition)}${String.fromCharCode(0)}`;
+
+    console.log("Post index:", postIndex, "Condition:", conditionCode, "Current condition:", currentCondition);
+
+    const command = `mh${String.fromCharCode(conditionCode)}${String.fromCharCode(0)}`;
     console.log("Command to send:", command);
 
     await flushDevice();
@@ -131,3 +134,15 @@ export async function sendTrigger(postIndex) {
   }
 }
 
+function getConditionCode(count) {
+  if (count === 1 || count === 42 || count === 63) {
+    return 1; // "Rest #1", "Rest #2", "Rest #3"
+  } else if (count >= 2 && count <= 21) {
+    return 2; // "Condition 1"
+  } else if (count >= 22 && count <= 41) {
+    return 3; // "MIST20"
+  } else if (count >= 43 && count <= 62) {
+    return 4; // "Condition 2"
+  }
+  return 0; // Fallback (should NOT happen)
+}

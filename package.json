@@ -9,6 +9,8 @@
     "@emotion/styled": "^11.10.5",
     "@mui/icons-material": "^5.11.0",
     "@mui/material": "^5.11.5",
+    "@serialport/binding-mock": "^10.2.2",
+    "@serialport/stream": "^13.0.0",
     "exceljs": "^4.3.0",
     "file-saver": "^2.0.5",
     "firebase": "^9.23.0",
@@ -17,6 +19,7 @@
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.7.0",
     "react-scripts": "^5.0.0",
+    "serialport": "^13.0.0",
     "smoothscroll-polyfill": "^0.4.4",
     "tailwindcss": "^3.2.4",
     "web-vitals": "^3.1.1"
@@ -52,6 +55,7 @@
     "autoprefixer": "^10.4.13",
     "cssnano": "^5.1.14",
     "firebase-tools": "^11.21.0",
-    "postcss": "^8.4.21"
+    "postcss": "^8.4.21",
+    "stream-browserify": "^3.0.0"
   }
 }
