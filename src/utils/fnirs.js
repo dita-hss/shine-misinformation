@@ -27,7 +27,7 @@ export async function connectToDevice() {
 
 export async function flushDevice() {
   if (!writer) {
-    console.error("Device not connected.");
+    console.error("1Device not connected.");
     return;
   }
   try {
@@ -40,7 +40,7 @@ export async function flushDevice() {
 
 export async function queryDevice() {
   if (!writer || !reader) {
-    console.error("Device not connected.");
+    console.error("2Device not connected.");
     return false;
   }
 
@@ -60,7 +60,7 @@ export async function queryDevice() {
 
 export async function setPulseDuration(duration) {
   if (!writer) {
-    console.error("Device not connected.");
+    console.error("3Device not connected.");
     return;
   }
 
@@ -81,7 +81,7 @@ export async function setPulseDuration(duration) {
 
 export async function sendTriggerToDevice(command) {
   if (!writer) {
-    console.error("Device not connected.");
+    console.error("4Device not connected.");
     return;
   }
   try {

@@ -10,7 +10,7 @@ export class ContinueButton extends MountAwareComponent {
 
     componentDidMount() {
         super.componentDidMount();
-        const delaySeconds = this.props.delay;
+        const delaySeconds = 0;
         if (!delaySeconds || delaySeconds <= 0) {
             this.setState(() => {
                 return {disabled: false};

@@ -4,7 +4,8 @@ export default class RestScreen extends Component {
   componentDidMount() {
     this.timeoutID = setTimeout(() => {
       this.props.onTimeout();
-    }, 40000); 
+      //change to 40 seconds
+    }, 3000); 
   }
 
   componentWillUnmount() {

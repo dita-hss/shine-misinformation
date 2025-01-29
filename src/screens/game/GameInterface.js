@@ -477,20 +477,17 @@ export class GameScreen extends ActiveGameScreen {
 
     const doStartReactDelay = !game.study.uiSettings.displayPostsInFeed;
     if (followerChange || credibilityChange) {
-      this.changeTimeoutID = setTimeout(() => {
-        this.setStateIfMounted(() => {
-          return {
-            followerChange: null,
-            credibilityChange: null,
-          };
-        });
-        if (doStartReactDelay) {
-          this.startReactDelay();
-        }
-      }, 1500);
-    } else if (doStartReactDelay) {
-      this.startReactDelay();
-    }
+  this.setStateIfMounted(() => {
+    return {
+      followerChange: null,
+      credibilityChange: null,
+    };
+  });
+  if (doStartReactDelay) {
+    this.startReactDelay();
+  }
+}
+
   }
 
   updateDynamicFeedbackFollowers(followers, finished) {
@@ -586,33 +583,29 @@ export class GameScreen extends ActiveGameScreen {
 
     if (currentPostIndex >= study.basicSettings.length) return;
 
-    // try {
-    //   console.log("Sending trigger to fNIRS device...");
-    //   const condition = currentPostIndex + 1;
-    //   const command = `mh${String.fromCharCode(condition)}${String.fromCharCode(
-    //     0
-    //   )}`;
-    //   await sendTriggerToDevice(command);
-    // } catch (error) {
-    //   console.error("Failed to send trigger to fNIRS device:", error);
-    // }
-
     if (study.uiSettings.displayPostsInFeed) {
       this.scrollToNextPost(true);
     } else {
-      this.setState((state) => {
-        const inters = state.interactions;
-        return {
-          showSelfReport: true,
-          interactions: inters.update(
-            currentPostIndex,
-            inters.get(currentPostIndex).withStartSelfReportResponses()
-          ),
-          dismissedPrompt: shouldShowPromptAgain
-            ? false
-            : state.dismissedPrompt,
-        };
-      });
+      this.setState(
+        (state) => {
+          const inters = state.interactions;
+          return {
+            showSelfReport: true,
+            interactions: inters.update(
+              this.getCurrentPostIndex(),
+              inters
+                .get(this.getCurrentPostIndex())
+                .withStartSelfReportResponses()
+            ),
+            dismissedPrompt:
+              this.getCurrentPostIndex() === 39 ? false : state.dismissedPrompt,
+          };
+        },
+        () => {
+          this.submitPost(this.getCurrentPostIndex());
+        }
+      );
+
     }
   }
 
