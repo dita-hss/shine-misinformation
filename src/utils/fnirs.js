@@ -31,19 +31,27 @@ export async function flushDevice() {
     return;
   }
   try {
-    // Cancel current reading operation
-    await reader.cancel();
-    reader.releaseLock();
+    // Ensure the reader is properly cancelled only if it's active
+    try {
+      await reader.cancel();
+    } catch (error) {
+      console.warn("Reader was already released or inactive.");
+    }
 
-    // Reinitialize the reader properly
+    reader.releaseLock(); // Release the lock safely
+
+    // Reset the reader properly
     const textDecoder = new TextDecoderStream();
-    reader = port.readable.pipeThrough(textDecoder).getReader();
+    const newReader = port.readable.pipeThrough(textDecoder).getReader();
+
+    reader = newReader; // Assign the new reader
 
     console.log("Device flushed successfully.");
   } catch (error) {
     console.error("Failed to flush device:", error);
   }
 }
+
 
 export async function flushWriter() {
   if (!writer) {
@@ -56,7 +64,7 @@ export async function flushWriter() {
 
     // Reinitialize the writer
     const textEncoder = new TextEncoderStream();
-    textEncoder.readable.pipeTo(port.writable);
+    await textEncoder.readable.pipeTo(port.writable); // Ensure piping completes
     writer = textEncoder.writable.getWriter();
 
     console.log("Writer flushed and reinitialized.");
@@ -64,6 +72,7 @@ export async function flushWriter() {
     console.error("Failed to flush writer:", error);
   }
 }
+
 
 
 export async function queryDevice() {
@@ -114,6 +123,7 @@ export async function sendTriggerToDevice(command) {
   }
   try {
     console.log("Sending command to device:", command);
+    await new Promise((resolve) => setTimeout(resolve, 50));
     await writer.write(command);
     console.log("Command sent successfully:", command);
   } catch (error) {
@@ -151,8 +161,9 @@ export async function sendTrigger(postIndex) {
     const command = `mh${String.fromCharCode(conditionCode)}${String.fromCharCode(0)}`;
     console.log("Command to send:", command);
 
-    await flushDevice();
+    await flushDevice(); 
     await flushWriter();
+    await new Promise((resolve) => setTimeout(resolve, 50));
     await sendTriggerToDevice(command);
 
     console.log("Command sent successfully.");
