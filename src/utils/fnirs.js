@@ -26,17 +26,29 @@ export async function connectToDevice() {
 }
 
 export async function flushDevice() {
-  if (!writer) {
-    console.error("1Device not connected.");
+  if (!reader || !writer) {
+    console.error("Device not connected.");
     return;
   }
   try {
-    await writer.write("");
-    console.log("Device flushed successfully.");
+    await reader.cancel(); // Cancel any ongoing read operation
+    reader.releaseLock();
+    await writer.close();
+    writer.releaseLock();
+
+    const textEncoder = new TextEncoderStream();
+    const textDecoder = new TextDecoderStream();
+
+    textEncoder.readable.pipeTo(port.writable);
+    reader = port.readable.pipeThrough(textDecoder).getReader();
+    writer = textEncoder.writable.getWriter();
+
+    console.log("Device flushed and reinitialized successfully.");
   } catch (error) {
     console.error("Failed to flush device:", error);
   }
 }
+
 
 
 
@@ -126,8 +138,9 @@ export async function sendTrigger(postIndex) {
     const command = `mh${String.fromCharCode(conditionCode)}${String.fromCharCode(uniqueByte)}${String.fromCharCode(0)}`;
     console.log("Command to send:", command);
 
-    await flushDevice();
+    
     await sendTriggerToDevice(command);
+    await flushDevice();
 
     console.log("Command sent successfully.");
 
