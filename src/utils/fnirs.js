@@ -121,9 +121,9 @@ export async function sendTrigger(postIndex) {
     const conditionCode = getConditionCode(currentCondition);
     uniqueByte = (uniqueByte + 1) % 256;
 
-    console.log("Post index:", postIndex, "Condition:", conditionCode, "Current condition:", currentCondition);
+    console.log("Post index:", postIndex, "Condition:", conditionCode, "Current condition:", currentCondition,"Unique byte:", uniqueByte);
 
-    const command = `mh${String.fromCharCode(conditionCode)}${String.fromCharCode(uniqueByte)}`;
+    const command = `mh${String.fromCharCode(conditionCode)}${String.fromCharCode(uniqueByte)}${String.fromCharCode(0)}`;
     console.log("Command to send:", command);
 
     await flushDevice();
