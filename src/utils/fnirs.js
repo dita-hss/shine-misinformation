@@ -26,17 +26,25 @@ export async function connectToDevice() {
 }
 
 export async function flushDevice() {
-  if (!writer) {
-    console.error("1Device not connected.");
+  if (!writer || !reader) {
+    console.error("Device not connected.");
     return;
   }
   try {
-    await writer.write("");
+    // Try canceling the reader to reset buffer
+    await reader.cancel();
+    reader.releaseLock();
+
+    // Reassign reader after clearing
+    const textDecoder = new TextDecoderStream();
+    reader = port.readable.pipeThrough(textDecoder).getReader();
+
     console.log("Device flushed successfully.");
   } catch (error) {
     console.error("Failed to flush device:", error);
   }
 }
+
 
 export async function queryDevice() {
   if (!writer || !reader) {
