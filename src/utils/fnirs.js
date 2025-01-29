@@ -90,20 +90,17 @@ export async function setPulseDuration(duration) {
 
 export async function sendTriggerToDevice(command) {
   if (!writer) {
-    console.error("Device not connected.");
+    console.error("4Device not connected.");
     return;
   }
   try {
-    console.log("Sending command to device (raw bytes):", command);
-    const commandBytes = new TextEncoder().encode(command);
-
-    await writer.write(commandBytes);
-    console.log("Command sent successfully:", commandBytes);
+    console.log("Sending command to device:", command);
+    await writer.write(command);
+    console.log("Command sent successfully:", command);
   } catch (error) {
     console.error("Failed to send trigger to device:", error);
   }
 }
-
 
 function getByte(val, index) {
   return (val >> (8 * (index - 1))) & 255;
@@ -123,20 +120,21 @@ async function readResponse(length) {
   return result;
 }
 
+let uniqueByte = 0;
 export async function sendTrigger(postIndex) {
   try {
     console.log("Preparing to send trigger...");
 
     const conditionCode = getConditionCode(currentCondition);
+    uniqueByte = (uniqueByte + 1) % 256;
 
     console.log("Post index:", postIndex, "Condition:", conditionCode, "Current condition:", currentCondition);
 
-    const commandBytes = new Uint8Array([...'mh'.split('').map(c => c.charCodeAt(0)), conditionCode, 0]);
-
-    console.log("Command bytes to send:", commandBytes);
+    const command = `mh${String.fromCharCode(conditionCode)}${String.fromCharCode(0)}${String.fromCharCode(uniqueByte)}`;
+    console.log("Command to send:", command);
 
     await flushDevice();
-    await sendTriggerToDevice(commandBytes);
+    await sendTriggerToDevice(command);
 
     console.log("Command sent successfully.");
 
