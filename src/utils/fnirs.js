@@ -31,45 +31,17 @@ export async function flushDevice() {
     return;
   }
   try {
-    // Ensure the reader is properly cancelled only if it's active
-    try {
-      await reader.cancel();
-    } catch (error) {
-      console.warn("Reader was already released or inactive.");
-    }
+    // Cancel current reading operation
+    await reader.cancel();
+    reader.releaseLock();
 
-    reader.releaseLock(); // Release the lock safely
-
-    // Reset the reader properly
+    // Reinitialize the reader properly
     const textDecoder = new TextDecoderStream();
-    const newReader = port.readable.pipeThrough(textDecoder).getReader();
-
-    reader = newReader; // Assign the new reader
+    reader = port.readable.pipeThrough(textDecoder).getReader();
 
     console.log("Device flushed successfully.");
   } catch (error) {
     console.error("Failed to flush device:", error);
-  }
-}
-
-
-export async function flushWriter() {
-  if (!writer) {
-    console.error("Device not connected.");
-    return;
-  }
-  try {
-    await writer.close();
-    writer.releaseLock();
-
-    // Reinitialize the writer
-    const textEncoder = new TextEncoderStream();
-    await textEncoder.readable.pipeTo(port.writable); // Ensure piping completes
-    writer = textEncoder.writable.getWriter();
-
-    console.log("Writer flushed and reinitialized.");
-  } catch (error) {
-    console.error("Failed to flush writer:", error);
   }
 }
 
@@ -118,18 +90,20 @@ export async function setPulseDuration(duration) {
 
 export async function sendTriggerToDevice(command) {
   if (!writer) {
-    console.error("4Device not connected.");
+    console.error("Device not connected.");
     return;
   }
   try {
-    console.log("Sending command to device:", command);
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    await writer.write(command);
-    console.log("Command sent successfully:", command);
+    console.log("Sending command to device (raw bytes):", command);
+    const commandBytes = new TextEncoder().encode(command);
+
+    await writer.write(commandBytes);
+    console.log("Command sent successfully:", commandBytes);
   } catch (error) {
     console.error("Failed to send trigger to device:", error);
   }
 }
+
 
 function getByte(val, index) {
   return (val >> (8 * (index - 1))) & 255;
@@ -155,16 +129,14 @@ export async function sendTrigger(postIndex) {
 
     const conditionCode = getConditionCode(currentCondition);
 
-
     console.log("Post index:", postIndex, "Condition:", conditionCode, "Current condition:", currentCondition);
 
-    const command = `mh${String.fromCharCode(conditionCode)}${String.fromCharCode(0)}`;
-    console.log("Command to send:", command);
+    const commandBytes = new Uint8Array([...'mh'.split('').map(c => c.charCodeAt(0)), conditionCode, 0]);
 
-    await flushDevice(); 
-    await flushWriter();
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    await sendTriggerToDevice(command);
+    console.log("Command bytes to send:", commandBytes);
+
+    await flushDevice();
+    await sendTriggerToDevice(commandBytes);
 
     console.log("Command sent successfully.");
 
@@ -173,6 +145,7 @@ export async function sendTrigger(postIndex) {
     console.error("Failed to send trigger to device:", error);
   }
 }
+
 
 function getConditionCode(count) {
   if (count === 1 || count === 42 || count === 63) {
