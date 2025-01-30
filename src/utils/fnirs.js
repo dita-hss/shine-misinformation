@@ -15,7 +15,8 @@ export async function connectToDevice() {
     const textDecoder = new TextDecoderStream();
 
     textEncoder.readable.pipeTo(port.writable);
-    reader = textDecoder.readable.pipeThrough(port.readable).getReader();
+    reader = port.readable.pipeThrough(textDecoder).getReader();
+
     writer = textEncoder.writable.getWriter();
 
     console.log("Device connected successfully.");
