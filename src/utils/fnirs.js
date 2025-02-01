@@ -31,9 +31,7 @@ export async function flushDevice() {
     return;
   }
   try {
-    await writer.write("\n"); // Ensure proper flushing
-    await writer.close();
-    writer = port.writable.getWriter(); // Reopen writer
+    await writer.write("");
     console.log("Device flushed successfully.");
   } catch (error) {
     console.error("Failed to flush device:", error);
@@ -47,7 +45,7 @@ export async function queryDevice() {
   }
 
   try {
-    await writer.write("_c1\n"); // Ensure newline for proper command format
+    await writer.write("_c1");
     console.log("Query sent to device.");
 
     const response = await readResponse(5);
@@ -73,7 +71,7 @@ export async function setPulseDuration(duration) {
       getByte(duration, 3),
       getByte(duration, 4),
     ];
-    const command = `mp${String.fromCharCode(...bytes)}\n`; // Ensure newline
+    const command = `mp${String.fromCharCode(...bytes)}`;
     await writer.write(command);
     console.log("Pulse duration set successfully:", duration);
   } catch (error) {
@@ -88,26 +86,23 @@ export async function sendTriggerToDevice(command) {
   }
   try {
     console.log("Sending command to device:", command);
-    await writer.write(command + "\n"); // Ensure newline
+    await writer.write(command);
     console.log("Command sent successfully:", command);
   } catch (error) {
     console.error("Failed to send trigger to device:", error);
   }
 }
 
-async function readResponse(length, timeout = 1000) {
+function getByte(val, index) {
+  return (val >> (8 * (index - 1))) & 255;
+}
+
+async function readResponse(length) {
   let result = "";
   try {
-    const timeoutPromise = new Promise((resolve) =>
-      setTimeout(() => resolve(null), timeout)
-    );
-
     while (result.length < length) {
-      const { value, done } = await Promise.race([
-        reader.read(),
-        timeoutPromise,
-      ]);
-      if (done || value === null) break;
+      const { value, done } = await reader.read();
+      if (done) break;
       result += value;
     }
   } catch (error) {
@@ -133,7 +128,7 @@ export async function sendTrigger(postIndex) {
 
     const command = `mh${String.fromCharCode(
       conditionCode
-    )}${String.fromCharCode(0)}\n`;
+    )}${String.fromCharCode(0)}`;
     console.log("Command to send:", command);
 
     await flushDevice();
@@ -145,10 +140,6 @@ export async function sendTrigger(postIndex) {
   } catch (error) {
     console.error("Failed to send trigger to device:", error);
   }
-}
-
-function getByte(val, index) {
-  return (val >> (8 * (index - 1))) & 255;
 }
 
 function getConditionCode(count) {
