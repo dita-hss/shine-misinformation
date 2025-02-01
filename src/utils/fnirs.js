@@ -6,7 +6,7 @@ let currentCondition = 1;
 ///to do: make dynamic
 export async function connectToDevice() {
   try {
-    console.log("test1.1");
+    console.log("test1.6");
     // request port and open connection
     port = await navigator.serial.requestPort();
     await port.open({ baudRate: 115200 });
@@ -136,7 +136,8 @@ export async function sendTrigger(postIndex) {
     await delay(100);
     await sendTriggerToDevice(command);
     await delay(100);
-    await sendTriggerToDevice("noop");
+    await sendTriggerToDevice("reset");
+    await flushDevice();
 
     console.log("Command sent successfully.");
 
