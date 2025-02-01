@@ -3,13 +3,12 @@ let writer;
 let reader;
 let currentCondition = 1;
 let lastTriggerTime = 0;
-const MINIMUM_TRIGGER_INTERVAL = 100;
-
-let toggleBit = 0;
+let lastConditionCode = null;
+const MINIMUM_TRIGGER_INTERVAL = 250; // Increased slightly
 
 export async function connectToDevice() {
   try {
-    console.log("test3");
+    console.log("test4");
     port = await navigator.serial.requestPort();
     await port.open({ baudRate: 115200 });
 
@@ -33,6 +32,8 @@ export async function flushDevice() {
   }
   try {
     await writer.write("");
+    // Add a small pause after flush
+    await new Promise((resolve) => setTimeout(resolve, 50));
     console.log("Device flushed successfully.");
   } catch (error) {
     console.error("Failed to flush device:", error);
@@ -88,6 +89,7 @@ export async function sendTriggerToDevice(command) {
   try {
     console.log("Sending command to device:", command);
     await writer.write(command);
+    await new Promise((resolve) => setTimeout(resolve, 50)); // Small pause after sending
     console.log("Command sent successfully:", command);
   } catch (error) {
     console.error("Failed to send trigger to device:", error);
@@ -112,6 +114,15 @@ async function readResponse(length) {
   return result;
 }
 
+async function sendResetCommand() {
+  try {
+    await writer.write("_r1");
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  } catch (error) {
+    console.error("Failed to send reset command:", error);
+  }
+}
+
 export async function sendTrigger(postIndex) {
   try {
     const currentTime = Date.now();
@@ -124,23 +135,31 @@ export async function sendTrigger(postIndex) {
 
     const conditionCode = getConditionCode(currentCondition);
 
-    // Create command with the toggle bit
+    // Try different approach for repeated triggers
+    if (conditionCode === lastConditionCode) {
+      // For repeated triggers, try sending a reset first
+      await sendResetCommand();
+    } else {
+      // For different triggers, do a normal flush
+      await flushDevice();
+    }
+
+    // Try a different command format that might force the device to see it as new
+    const timestamp = Date.now() % 256; // Use timestamp as part of command
     const command = `mh${String.fromCharCode(
       conditionCode
-    )}${String.fromCharCode(toggleBit)}`;
+    )}${String.fromCharCode(timestamp)}`;
+
     console.log("Sending trigger:", {
       postIndex,
       condition: conditionCode,
-      toggleBit,
+      timestamp,
       command,
     });
 
-    await flushDevice();
     await sendTriggerToDevice(command);
 
-    // Flip the toggle bit for the next trigger
-    toggleBit = toggleBit === 0 ? 1 : 0;
-
+    lastConditionCode = conditionCode;
     lastTriggerTime = Date.now();
     currentCondition++;
   } catch (error) {
