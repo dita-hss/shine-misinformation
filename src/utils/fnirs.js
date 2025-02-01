@@ -87,7 +87,7 @@ export async function sendTriggerToDevice(command) {
   }
   try {
     console.log("Sending command to device:", command);
-    await writer.write(`${command}\n`);
+    await writer.write(`${command}\r\n`);
     console.log("Command sent successfully:", command);
   } catch (error) {
     console.error("Failed to send trigger to device:", error);
