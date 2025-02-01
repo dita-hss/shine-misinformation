@@ -133,8 +133,9 @@ export async function sendTrigger(postIndex) {
     console.log("Command to send:", command);
 
     await flushDevice();
-    await delay(50);
+    await delay(100);
     await sendTriggerToDevice(command);
+    await delay(100);
     await sendTriggerToDevice("noop");
 
     console.log("Command sent successfully.");
@@ -156,4 +157,8 @@ function getConditionCode(count) {
     return 4; // "Condition 2"
   }
   return 0; // Fallback (should NOT happen)
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
