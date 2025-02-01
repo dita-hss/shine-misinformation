@@ -8,7 +8,7 @@ const MINIMUM_TRIGGER_INTERVAL = 250; // Increased slightly
 
 export async function connectToDevice() {
   try {
-    console.log("test4");
+    console.log("test5");
     port = await navigator.serial.requestPort();
     await port.open({ baudRate: 115200 });
 
