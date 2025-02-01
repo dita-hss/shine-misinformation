@@ -2,21 +2,21 @@ let port;
 let writer;
 let reader;
 let currentCondition = 1;
-let lastTriggerTime = 0;
-let lastConditionCode = null;
-const MINIMUM_TRIGGER_INTERVAL = 250; // Increased slightly
 
+///to do: make dynamic
 export async function connectToDevice() {
   try {
-    console.log("test5");
+    // request port and open connection
     port = await navigator.serial.requestPort();
     await port.open({ baudRate: 115200 });
 
+    // set up writer and reader
     const textEncoder = new TextEncoderStream();
     const textDecoder = new TextDecoderStream();
 
     textEncoder.readable.pipeTo(port.writable);
     reader = port.readable.pipeThrough(textDecoder).getReader();
+
     writer = textEncoder.writable.getWriter();
 
     console.log("Device connected successfully.");
@@ -27,13 +27,11 @@ export async function connectToDevice() {
 
 export async function flushDevice() {
   if (!writer) {
-    console.error("Device not connected.");
+    console.error("1Device not connected.");
     return;
   }
   try {
     await writer.write("");
-    // Add a small pause after flush
-    await new Promise((resolve) => setTimeout(resolve, 50));
     console.log("Device flushed successfully.");
   } catch (error) {
     console.error("Failed to flush device:", error);
@@ -42,7 +40,7 @@ export async function flushDevice() {
 
 export async function queryDevice() {
   if (!writer || !reader) {
-    console.error("Device not connected.");
+    console.error("2Device not connected.");
     return false;
   }
 
@@ -62,7 +60,7 @@ export async function queryDevice() {
 
 export async function setPulseDuration(duration) {
   if (!writer) {
-    console.error("Device not connected.");
+    console.error("3Device not connected.");
     return;
   }
 
@@ -83,13 +81,12 @@ export async function setPulseDuration(duration) {
 
 export async function sendTriggerToDevice(command) {
   if (!writer) {
-    console.error("Device not connected.");
+    console.error("4Device not connected.");
     return;
   }
   try {
     console.log("Sending command to device:", command);
     await writer.write(command);
-    await new Promise((resolve) => setTimeout(resolve, 50)); // Small pause after sending
     console.log("Command sent successfully:", command);
   } catch (error) {
     console.error("Failed to send trigger to device:", error);
@@ -114,53 +111,31 @@ async function readResponse(length) {
   return result;
 }
 
-async function sendResetCommand() {
-  try {
-    await writer.write("_r1");
-    await new Promise((resolve) => setTimeout(resolve, 50));
-  } catch (error) {
-    console.error("Failed to send reset command:", error);
-  }
-}
-
 export async function sendTrigger(postIndex) {
   try {
-    const currentTime = Date.now();
-    const timeSinceLastTrigger = currentTime - lastTriggerTime;
-
-    if (timeSinceLastTrigger < MINIMUM_TRIGGER_INTERVAL) {
-      const delayNeeded = MINIMUM_TRIGGER_INTERVAL - timeSinceLastTrigger;
-      await new Promise((resolve) => setTimeout(resolve, delayNeeded));
-    }
+    console.log("Preparing to send trigger...");
 
     const conditionCode = getConditionCode(currentCondition);
 
-    // Try different approach for repeated triggers
-    if (conditionCode === lastConditionCode) {
-      // For repeated triggers, try sending a reset first
-      await sendResetCommand();
-    } else {
-      // For different triggers, do a normal flush
-      await flushDevice();
-    }
-
-    // Try a different command format that might force the device to see it as new
-    const timestamp = Date.now() % 256; // Use timestamp as part of command
-    const command = `mh${String.fromCharCode(
-      conditionCode
-    )}${String.fromCharCode(timestamp)}`;
-
-    console.log("Sending trigger:", {
+    console.log(
+      "Post index:",
       postIndex,
-      condition: conditionCode,
-      timestamp,
-      command,
-    });
+      "Condition:",
+      conditionCode,
+      "Current condition:",
+      currentCondition
+    );
 
+    const command = `mh${String.fromCharCode(
+      currentCondition
+    )}${String.fromCharCode(0)}`;
+    console.log("Command to send:", command);
+
+    await flushDevice();
     await sendTriggerToDevice(command);
 
-    lastConditionCode = conditionCode;
-    lastTriggerTime = Date.now();
+    console.log("Command sent successfully.");
+
     currentCondition++;
   } catch (error) {
     console.error("Failed to send trigger to device:", error);
