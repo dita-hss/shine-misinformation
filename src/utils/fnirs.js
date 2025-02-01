@@ -6,6 +6,7 @@ let currentCondition = 1;
 ///to do: make dynamic
 export async function connectToDevice() {
   try {
+    console.log("test1.1");
     // request port and open connection
     port = await navigator.serial.requestPort();
     await port.open({ baudRate: 115200 });
@@ -31,7 +32,7 @@ export async function flushDevice() {
     return;
   }
   try {
-    await writer.write("");
+    await writer.write("\n");
     console.log("Device flushed successfully.");
   } catch (error) {
     console.error("Failed to flush device:", error);
@@ -127,12 +128,14 @@ export async function sendTrigger(postIndex) {
     );
 
     const command = `mh${String.fromCharCode(
-      currentCondition
+      conditionCode
     )}${String.fromCharCode(0)}`;
     console.log("Command to send:", command);
 
     await flushDevice();
+    await delay(50);
     await sendTriggerToDevice(command);
+    await sendTriggerToDevice("noop");
 
     console.log("Command sent successfully.");
 
