@@ -2,19 +2,21 @@ let port;
 let writer;
 let reader;
 let currentCondition = 1;
-let lastTriggerTime = 0;
-const MINIMUM_TRIGGER_INTERVAL = 5000;
 
+///to do: make dynamic
 export async function connectToDevice() {
   try {
+    // request port and open connection
     port = await navigator.serial.requestPort();
     await port.open({ baudRate: 115200 });
 
+    // set up writer and reader
     const textEncoder = new TextEncoderStream();
     const textDecoder = new TextDecoderStream();
 
     textEncoder.readable.pipeTo(port.writable);
     reader = port.readable.pipeThrough(textDecoder).getReader();
+
     writer = textEncoder.writable.getWriter();
 
     console.log("Device connected successfully.");
@@ -25,11 +27,13 @@ export async function connectToDevice() {
 
 export async function flushDevice() {
   if (!writer) {
-    console.error("Device not connected.");
+    console.error("1Device not connected.");
     return;
   }
   try {
-    await writer.write("");
+    await writer.write("\n");
+    await writer.close();
+    writer = port.writable.getWriter();
     console.log("Device flushed successfully.");
   } catch (error) {
     console.error("Failed to flush device:", error);
@@ -38,7 +42,7 @@ export async function flushDevice() {
 
 export async function queryDevice() {
   if (!writer || !reader) {
-    console.error("Device not connected.");
+    console.error("2Device not connected.");
     return false;
   }
 
@@ -58,7 +62,7 @@ export async function queryDevice() {
 
 export async function setPulseDuration(duration) {
   if (!writer) {
-    console.error("Device not connected.");
+    console.error("3Device not connected.");
     return;
   }
 
@@ -79,7 +83,7 @@ export async function setPulseDuration(duration) {
 
 export async function sendTriggerToDevice(command) {
   if (!writer) {
-    console.error("Device not connected.");
+    console.error("4Device not connected.");
     return;
   }
   try {
@@ -111,17 +115,7 @@ async function readResponse(length) {
 
 export async function sendTrigger(postIndex) {
   try {
-    const currentTime = Date.now();
-    const timeSinceLastTrigger = currentTime - lastTriggerTime;
-
     console.log("Preparing to send trigger...");
-    console.log("Time since last trigger:", timeSinceLastTrigger, "ms");
-
-    if (timeSinceLastTrigger < MINIMUM_TRIGGER_INTERVAL) {
-      const delayNeeded = MINIMUM_TRIGGER_INTERVAL - timeSinceLastTrigger;
-      console.log(`Waiting ${delayNeeded}ms before sending next trigger...`);
-      await new Promise((resolve) => setTimeout(resolve, delayNeeded));
-    }
 
     const conditionCode = getConditionCode(currentCondition);
 
@@ -134,39 +128,19 @@ export async function sendTrigger(postIndex) {
       currentCondition
     );
 
-    await flushDevice();
-
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
     const command = `mh${String.fromCharCode(
       conditionCode
     )}${String.fromCharCode(0)}`;
     console.log("Command to send:", command);
 
+    await flushDevice();
     await sendTriggerToDevice(command);
 
-    lastTriggerTime = Date.now();
-
-    const verified = await verifyTriggerSent();
-    if (!verified) {
-      console.warn("Trigger may not have been properly received by device");
-    }
-
     console.log("Command sent successfully.");
+
     currentCondition++;
   } catch (error) {
     console.error("Failed to send trigger to device:", error);
-  }
-}
-
-async function verifyTriggerSent() {
-  try {
-    await writer.write("_q1");
-    const response = await readResponse(5);
-    return response === "_ack1";
-  } catch (error) {
-    console.error("Failed to verify trigger:", error);
-    return false;
   }
 }
 
