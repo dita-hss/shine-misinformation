@@ -6,7 +6,7 @@ let currentCondition = 1;
 ///to do: make dynamic
 export async function connectToDevice() {
   try {
-    console.log("test1.6");
+    console.log("test1.9");
     // request port and open connection
     port = await navigator.serial.requestPort();
     await port.open({ baudRate: 115200 });
@@ -134,6 +134,8 @@ export async function sendTrigger(postIndex) {
 
     await flushDevice();
     await delay(100);
+    await reinitializeWriter();
+    await delay(100);
     await sendTriggerToDevice(command);
     await delay(100);
     await sendTriggerToDevice("reset");
@@ -162,4 +164,10 @@ function getConditionCode(count) {
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export async function reinitializeWriter() {
+  const textEncoder = new TextEncoderStream();
+  textEncoder.readable.pipeTo(port.writable);
+  writer = textEncoder.writable.getWriter();
 }
