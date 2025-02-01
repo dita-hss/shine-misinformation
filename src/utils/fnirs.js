@@ -6,7 +6,7 @@ let currentCondition = 1;
 ///to do: make dynamic
 export async function connectToDevice() {
   try {
-    console.log("test1.1");
+    console.log("test1.2");
     // request port and open connection
     port = await navigator.serial.requestPort();
     await port.open({ baudRate: 115200 });
@@ -81,18 +81,25 @@ export async function setPulseDuration(duration) {
 }
 
 export async function sendTriggerToDevice(command) {
-  if (!writer) {
+  if (!port) {
     console.error("4Device not connected.");
     return;
   }
   try {
+    // Reinitialize the writer
+    const textEncoder = new TextEncoderStream();
+    textEncoder.readable.pipeTo(port.writable);
+    writer = textEncoder.writable.getWriter();
+
     console.log("Sending command to device:", command);
-    await writer.write(command);
+    await writer.write(`${command}\n`); // Adding newline
+    await writer.close(); // Close writer after sending command
     console.log("Command sent successfully:", command);
   } catch (error) {
     console.error("Failed to send trigger to device:", error);
   }
 }
+
 
 function getByte(val, index) {
   return (val >> (8 * (index - 1))) & 255;
