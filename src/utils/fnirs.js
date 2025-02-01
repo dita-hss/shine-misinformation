@@ -11,6 +11,9 @@ export async function connectToDevice() {
     port = await navigator.serial.requestPort();
     await port.open({ baudRate: 115200 });
 
+    console.log("Port Information:", port.getInfo());
+
+
     // set up writer and reader
     const textEncoder = new TextEncoderStream();
     const textDecoder = new TextDecoderStream();
@@ -134,8 +137,6 @@ export async function sendTrigger(postIndex) {
 
     await flushDevice();
     await delay(100);
-    await reinitializeWriter();
-    await delay(100);
     await sendTriggerToDevice(command);
     await delay(100);
     await sendTriggerToDevice("reset");
@@ -166,8 +167,3 @@ function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function reinitializeWriter() {
-  const textEncoder = new TextEncoderStream();
-  textEncoder.readable.pipeTo(port.writable);
-  writer = textEncoder.writable.getWriter();
-}
