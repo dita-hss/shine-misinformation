@@ -4,10 +4,10 @@ let reader;
 let currentCondition = 1;
 
 const conditionMapping = {
-  1: [1, 3, 5], // Rest (Stimulus Channel 1)
-  2: [2, 6, 10], // Condition 1 (Stimulus Channel 2)
-  3: [4, 12, 20], // Condition 2 (Stimulus Channel 3)
-  4: [8, 24, 40], // Condition 3 (Stimulus Channel 4)
+  1: [3, 5, 7], // Rest (Stimulus Channel 1)
+  2: [6, 10, 18], // Condition 1 (Stimulus Channel 2)
+  3: [12, 20, 28], // Condition 2 (Stimulus Channel 3)
+  4: [24, 40, 56], // Condition 3 (Stimulus Channel 4)
 };
 
 let conditionIndex = { 1: 0, 2: 0, 3: 0, 4: 0 };
@@ -18,7 +18,12 @@ export async function connectToDevice() {
     console.log("test5.1");
     // request port and open connection
     port = await navigator.serial.requestPort();
-    await port.open({ baudRate: 115200 });
+    await port.open({
+      baudRate: 115200,
+      dataBits: 8,
+      stopBits: 1,
+      parity: "none",
+    });
 
     // set up writer and reader
     const textEncoder = new TextEncoderStream();
