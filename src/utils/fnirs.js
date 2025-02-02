@@ -3,96 +3,31 @@ let writer;
 let reader;
 let currentCondition = 1;
 
-// ///to do: make dynamic
-// export async function connectToDevice() {
-//   try {
-//     console.log("test2.1");
-//     // request port and open connection
-//     port = await navigator.serial.requestPort();
-//     await port.open({ baudRate: 115200 });
-
-//     console.log("Port Information:", port.getInfo());
-
-
-//     // set up writer and reader
-//     const textEncoder = new TextEncoderStream();
-//     const textDecoder = new TextDecoderStream();
-
-//     textEncoder.readable.pipeTo(port.writable);
-//     reader = port.readable.pipeThrough(textDecoder).getReader();
-
-//     writer = textEncoder.writable.getWriter();
-
-//     console.log("Device connected successfully.");
-//   } catch (error) {
-//     console.error("Failed to connect to device:", error);
-//   }
-// }
-
-let device;
-
+///to do: make dynamic
 export async function connectToDevice() {
   try {
-    console.log("Requesting USB device...");
-    device = await navigator.usb.requestDevice({
-      filters: [{ vendorId: 1027 }],
-    });
+    console.log("test2.9");
+    // request port and open connection
+    port = await navigator.serial.requestPort();
+    await port.open({ baudRate: 115200 });
 
-    await device.open();
-    await device.selectConfiguration(1);
+    console.log("Port Information:", port.getInfo());
 
-    // Log all available interfaces before claiming
-    console.log("Available Interfaces:", device.configuration.interfaces);
 
-    // Try claiming different interfaces if interface 0 fails
-    const interfaces = device.configuration.interfaces;
-    let claimed = false;
+    // set up writer and reader
+    const textEncoder = new TextEncoderStream();
+    const textDecoder = new TextDecoderStream();
 
-    for (let i = 0; i < interfaces.length; i++) {
-      try {
-        await device.claimInterface(i);
-        console.log(`Successfully claimed interface ${i}`);
-        claimed = true;
-        break;
-      } catch (claimError) {
-        console.warn(`Unable to claim interface ${i}:`, claimError);
-      }
-    }
+    textEncoder.readable.pipeTo(port.writable);
+    reader = port.readable.pipeThrough(textDecoder).getReader();
 
-    if (!claimed) {
-      throw new Error("Unable to claim any interface.");
-    }
+    writer = textEncoder.writable.getWriter();
 
-    inspectDeviceEndpoints(device);
+    console.log("Device connected successfully.");
   } catch (error) {
-    console.error("Failed to connect to USB device:", error);
+    console.error("Failed to connect to device:", error);
   }
 }
-
-
-function inspectDeviceEndpoints(device) {
-  console.log("Inspecting device configurations...");
-
-  device.configurations.forEach((config, configIndex) => {
-    console.log(`Configuration ${configIndex + 1}:`, config);
-
-    config.interfaces.forEach((iface, ifaceIndex) => {
-      console.log(`  Interface ${ifaceIndex + 1}:`, iface);
-
-      iface.alternates.forEach((alt, altIndex) => {
-        console.log(`    Alternate Setting ${altIndex + 1}:`, alt);
-
-        alt.endpoints.forEach((endpoint, epIndex) => {
-          console.log(`      Endpoint ${epIndex + 1}:`);
-          console.log(`        Endpoint Number: ${endpoint.endpointNumber}`);
-          console.log(`        Direction: ${endpoint.direction}`); // 'in' or 'out'
-          console.log(`        Type: ${endpoint.type}`); // 'bulk', 'interrupt', etc.
-        });
-      });
-    });
-  });
-}
-
 
 export async function flushDevice() {
   if (!writer || !reader) {
@@ -103,7 +38,6 @@ export async function flushDevice() {
     await writer.write("\n");
     while (true) {
       const { value, done } = await reader.read();
-      console.log("Flushing device:", value);
       if (done || !value) break;
     }
 
@@ -206,8 +140,11 @@ export async function sendTrigger(postIndex) {
     )}${String.fromCharCode(0)}`;
     console.log("Command to send:", command);
 
+    await flushDevice();
+    await delay(100);
     await sendTriggerToDevice(command);
     await delay(100);
+    await sendTriggerToDevice("reset");
     await flushDevice();
 
     console.log("Command sent successfully.");
