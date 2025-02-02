@@ -6,7 +6,7 @@ let currentCondition = 1;
 ///to do: make dynamic
 export async function connectToDevice() {
   try {
-    console.log("test1.9");
+    console.log("test2.0");
     // request port and open connection
     port = await navigator.serial.requestPort();
     await port.open({ baudRate: 115200 });
@@ -30,12 +30,17 @@ export async function connectToDevice() {
 }
 
 export async function flushDevice() {
-  if (!writer) {
-    console.error("1Device not connected.");
+  if (!writer || !reader) {
+    console.error("Device not connected.");
     return;
   }
   try {
     await writer.write("\n");
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done || !value) break;
+    }
+
     console.log("Device flushed successfully.");
   } catch (error) {
     console.error("Failed to flush device:", error);
@@ -139,7 +144,30 @@ export async function sendTrigger(postIndex) {
     await delay(100);
     await sendTriggerToDevice(command);
     await delay(100);
-    await sendTriggerToDevice("reset");
+    const resetCommands = [
+      "reset",
+      "RESET",
+      "*CLS", // SCPI clear status command (sometimes acts as a soft reset)
+      "clear",
+      "CLEAR",
+      "init",
+      "INIT",
+      "esc", // Escape character (ASCII 27)
+      String.fromCharCode(0x1b), // ESC key in ASCII
+      String.fromCharCode(0x03), // CTRL+C (common interrupt signal)
+      String.fromCharCode(0x04), // CTRL+D (end-of-transmission signal)
+    ];
+
+    // Try all reset commands
+    for (const command of resetCommands) {
+      try {
+        console.log(`Trying reset command: ${command}`);
+        await sendTriggerToDevice(command);
+        await delay(500); // Add a delay after each command
+      } catch (error) {
+        console.error(`Failed to send reset command: ${command}`, error);
+      }
+    }
     await flushDevice();
 
     console.log("Command sent successfully.");
