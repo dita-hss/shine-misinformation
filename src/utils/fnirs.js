@@ -15,7 +15,7 @@ let conditionIndex = { 1: 0, 2: 0, 3: 0, 4: 0 };
 ///to do: make dynamic
 export async function connectToDevice() {
   try {
-    console.log("test3.4");
+    console.log("test3.5");
     // request port and open connection
     port = await navigator.serial.requestPort();
     await port.open({ baudRate: 115200 });
