@@ -15,7 +15,7 @@ let conditionIndex = { 1: 0, 2: 0, 3: 0, 4: 0 };
 ///to do: make dynamic
 export async function connectToDevice() {
   try {
-    console.log("test3.5");
+    console.log("test3.4");
     // request port and open connection
     port = await navigator.serial.requestPort();
     await port.open({ baudRate: 115200 });
@@ -181,4 +181,8 @@ function getConditionCode(logicalCode) {
 
   // Return the unique code
   return uniqueCodes[currentIndex];
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
