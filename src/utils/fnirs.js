@@ -14,7 +14,7 @@ let conditionIndex = { 1: 0, 2: 0, 3: 0, 4: 0 }; // Track the index for each con
 ///to do: make dynamic
 export async function connectToDevice() {
   try {
-    console.log("test4.1");
+    console.log("test3.4");
     // request port and open connection
     port = await navigator.serial.requestPort();
     await port.open({ baudRate: 115200 });
@@ -139,7 +139,9 @@ export async function sendTrigger(postIndex) {
 
     
 
-    const command = new Uint8Array([0x6d, 0x68, currentCondition, 0x00]); // 'mh' + condition + 0
+    const command = `mh${String.fromCharCode(
+      currentCondition
+    )}${String.fromCharCode(0)}`;
     console.log("Command to send:", command);
 
     await flushDevice();
