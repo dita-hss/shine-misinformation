@@ -45,7 +45,6 @@ export async function flushDevice() {
   }
   try {
     if (port.readable && port.writable) {
-      await port.readable.cancel(); // Cancels any ongoing reads
       await port.writable.abort(); // Aborts ongoing writes
       console.log("Serial buffers flushed.");
     }
