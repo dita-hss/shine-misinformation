@@ -19,7 +19,7 @@ export async function connectToDevice() {
     // request port and open connection
     port = await navigator.serial.requestPort();
     await port.open({
-      baudRate: 115200
+      baudRate: 115200,
     });
 
     // set up writer and reader
@@ -44,6 +44,11 @@ export async function flushDevice() {
     return;
   }
   try {
+    if (port.readable && port.writable) {
+      await port.readable.cancel(); // Cancels any ongoing reads
+      await port.writable.abort(); // Aborts ongoing writes
+      console.log("Serial buffers flushed.");
+    }
     await writer.write("");
     console.log("Device flushed successfully.");
   } catch (error) {
