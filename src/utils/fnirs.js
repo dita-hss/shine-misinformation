@@ -4,10 +4,10 @@ let reader;
 let currentCondition = 1;
 
 const conditionMapping = {
-  1: [1, 16, 32], // Rest (Stimulus Channel 1)
-  2: [2, 17, 33], // Condition 1 (Stimulus Channel 2)
-  3: [4, 18, 34], // Condition 2 (Stimulus Channel 3)
-  4: [8, 19, 35], // Condition 3 (Stimulus Channel 4)
+  1: [1, 3, 5], // Rest (Stimulus Channel 1)
+  2: [2, 6, 10], // Condition 1 (Stimulus Channel 2)
+  3: [4, 12, 20], // Condition 2 (Stimulus Channel 3)
+  4: [8, 24, 40], // Condition 3 (Stimulus Channel 4)
 };
 
 let conditionIndex = { 1: 0, 2: 0, 3: 0, 4: 0 };
