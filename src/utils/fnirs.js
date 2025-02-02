@@ -3,6 +3,15 @@ let writer;
 let reader;
 let currentCondition = 1;
 
+const conditionMapping = {
+  1: [1, 5, 9],   // Rest
+  2: [2, 6, 10],  // Condition 1
+  3: [3, 7, 11],  // Condition 2
+  4: [4, 8, 12],  // Condition 3
+};
+
+let conditionIndex = { 1: 0, 2: 0, 3: 0, 4: 0 }; 
+
 ///to do: make dynamic
 export async function connectToDevice() {
   try {
@@ -111,55 +120,65 @@ async function readResponse(length) {
   }
   return result;
 }
-
 export async function sendTrigger(postIndex) {
   try {
     console.log("Preparing to send trigger...");
-
-    const conditionCode = getConditionCode(currentCondition);
-
+    const logicalCode = getLogicalCondition(currentCondition); // Map count to logical condition
+    const uniqueCode = getConditionCode(logicalCode); // Get the unique code
     console.log(
       "Post index:",
       postIndex,
-      "Condition:",
-      conditionCode,
+      "Logical condition:",
+      logicalCode,
+      "Unique code:",
+      uniqueCode,
       "Current condition:",
       currentCondition
     );
 
-    const command = `mh${String.fromCharCode(
-      Math.floor(conditionCode)
-    )}${String.fromCharCode(0)}`;
+    const command = `mh${String.fromCharCode(uniqueCode)}${String.fromCharCode(
+      0
+    )}`;
     console.log("Command to send:", command);
 
     await flushDevice();
+    await delay(100);
     await sendTriggerToDevice(command);
-
+    await delay(100);
+    await sendTriggerToDevice("reset");
+    await flushDevice();
     console.log("Command sent successfully.");
-
     currentCondition++;
   } catch (error) {
     console.error("Failed to send trigger to device:", error);
   }
 }
 
-let uniqueCounter = 0; // Global counter to ensure uniqueness
-
-function getConditionCode(count) {
-  let baseCode;
+function getLogicalCondition(count) {
   if (count === 1 || count === 42 || count === 63) {
-    baseCode = 1; // "Rest #1", "Rest #2", "Rest #3"
+    return 1; // "Rest"
   } else if (count >= 2 && count <= 21) {
-    baseCode = 2; // "Condition 1"
+    return 2; // "Condition 1"
   } else if (count >= 22 && count <= 41) {
-    baseCode = 3; // "MIST20"
+    return 3; // "Condition 2"
   } else if (count >= 43 && count <= 62) {
-    baseCode = 4; // "Condition 2"
-  } else {
-    baseCode = 0; // Fallback (should NOT happen)
+    return 4; // "Condition 3"
+  }
+  return 0; // Fallback (should NOT happen)
+}
+
+function getConditionCode(logicalCode) {
+  if (!conditionMapping[logicalCode]) {
+    throw new Error(`Invalid logical condition code: ${logicalCode}`);
   }
 
-  // Append a unique identifier to the base code
-  const uniqueCode = baseCode + uniqueCounter++ / 100;
-  return uniqueCode;
+  // Get the current index for the logical condition
+  const currentIndex = conditionIndex[logicalCode];
+  const uniqueCodes = conditionMapping[logicalCode];
+
+  // Increment the index for the next call (wrap around if necessary)
+  conditionIndex[logicalCode] = (currentIndex + 1) % uniqueCodes.length;
+
+  // Return the unique code
+  return uniqueCodes[currentIndex];
 }
