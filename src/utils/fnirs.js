@@ -4,17 +4,18 @@ let reader;
 let currentCondition = 1;
 
 const conditionMapping = {
-  1: [1, 1, 1], // Rest (Code: 1)
-  2: [2, 2, 2], // Condition 1 (Code: 2)
-  3: [3, 3, 3], // Condition 2 (Code: 3)
-  4: [4, 4, 4], // Condition 3 (Code: 4)
+  1: [1, 16, 32], // Rest (Stimulus Channel 1)
+  2: [2, 17, 33], // Condition 1 (Stimulus Channel 2)
+  3: [4, 18, 34], // Condition 2 (Stimulus Channel 3)
+  4: [8, 19, 35], // Condition 3 (Stimulus Channel 4)
 };
-let conditionIndex = { 1: 0, 2: 0, 3: 0, 4: 0 }; // Track the index for each condition
+
+let conditionIndex = { 1: 0, 2: 0, 3: 0, 4: 0 };
 
 ///to do: make dynamic
 export async function connectToDevice() {
   try {
-    console.log("test3.4");
+    console.log("test5.1");
     // request port and open connection
     port = await navigator.serial.requestPort();
     await port.open({ baudRate: 115200 });
@@ -28,8 +29,6 @@ export async function connectToDevice() {
 
     writer = textEncoder.writable.getWriter();
 
-    await setPulseDuration(1000);
-
     console.log("Device connected successfully.");
   } catch (error) {
     console.error("Failed to connect to device:", error);
@@ -42,7 +41,7 @@ export async function flushDevice() {
     return;
   }
   try {
-    await writer.write("\n");
+    await writer.write("");
     console.log("Device flushed successfully.");
   } catch (error) {
     console.error("Failed to flush device:", error);
@@ -124,8 +123,8 @@ async function readResponse(length) {
 export async function sendTrigger(postIndex) {
   try {
     console.log("Preparing to send trigger...");
-    const logicalCode = getLogicalCondition(currentCondition); // Map count to logical condition
-    const uniqueCode = getConditionCode(logicalCode); // Get the unique code
+    const logicalCode = getLogicalCondition(currentCondition); 
+    const uniqueCode = getConditionCode(logicalCode);
     console.log(
       "Post index:",
       postIndex,
@@ -137,19 +136,16 @@ export async function sendTrigger(postIndex) {
       currentCondition
     );
 
-    
-
-    const command = `mh${String.fromCharCode(
-      currentCondition
-    )}${String.fromCharCode(0)}`;
+    const command = `mh${String.fromCharCode(uniqueCode)}${String.fromCharCode(
+      0
+    )}`;
     console.log("Command to send:", command);
 
-    await flushDevice();
+    //await flushDevice();
     await delay(100);
-    await sendTriggerToDevice(command);
+    //await sendTriggerToDevice(command);
     await delay(100);
-    await sendTriggerToDevice("reset");
-    await flushDevice();
+    //await flushDevice();
     console.log("Command sent successfully.");
     currentCondition++;
   } catch (error) {
@@ -158,32 +154,27 @@ export async function sendTrigger(postIndex) {
 }
 
 function getLogicalCondition(count) {
-  if (count === 1 || count === 42 || count === 63) {
+  if (count === 1 || count===  22|| count === 42) {
     return 1; // "Rest"
   } else if (count >= 2 && count <= 21) {
     return 2; // "Condition 1"
   } else if (count >= 22 && count <= 41) {
     return 3; // "Condition 2"
-  } else if (count >= 43 && count <= 62) {
+  } else if (count >= 43 && count <= 63) {
     return 4; // "Condition 3"
   }
   return 0; // Fallback (should NOT happen)
 }
-
 
 function getConditionCode(logicalCode) {
   if (!conditionMapping[logicalCode]) {
     throw new Error(`Invalid logical condition code: ${logicalCode}`);
   }
 
-  // Get the current index for the logical condition
   const currentIndex = conditionIndex[logicalCode];
   const uniqueCodes = conditionMapping[logicalCode];
-
-  // Increment the index for the next call (wrap around if necessary)
   conditionIndex[logicalCode] = (currentIndex + 1) % uniqueCodes.length;
 
-  // Return the unique code
   return uniqueCodes[currentIndex];
 }
 

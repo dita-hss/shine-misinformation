@@ -178,6 +178,7 @@ export class GameScreen extends ActiveGameScreen {
       error: null,
       haveShownPrompt: false,
       haveShownRest: false,
+      haveShownRest2: false,
 
       showSelfReport: false,
       allowReactions: true,
@@ -318,12 +319,6 @@ export class GameScreen extends ActiveGameScreen {
       haveShownPrompt: true,
       interactions: updatedInteractions,
     });
-
-    //async operations after updating the state
-    const condition = postIndex === 39 ? 3 : 1;
-    const command = `mh${String.fromCharCode(condition)}${String.fromCharCode(
-      0
-    )}`;
 
     sendTrigger(this.getCurrentPostIndex());
 
@@ -659,14 +654,14 @@ export class GameScreen extends ActiveGameScreen {
     //console.log("on the self report", responses);
     const currentPostIndex = this.getCurrentPostIndex();
 
-    if (currentPostIndex === 40 && !this.state.haveShownRest) {
+    if (currentPostIndex === 40 && !this.state.haveShownRest2) {
       // Show rest screen before prompt at post 39
-      this.setState({ showRest: true, haveShownRest: true });
+      this.setState({ showRest: true, haveShownRest2: true });
       //sendTrigger(-1);
     }
 
-    if (currentPostIndex === 60) {
-      this.setState({ showRest: true });
+    if (currentPostIndex === 20 && !this.state.haveShownRest) {
+      this.setState({ showRest: true, haveShownRest: true });
       //sendTrigger(-1);
     }
     
