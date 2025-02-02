@@ -14,7 +14,7 @@ let conditionIndex = { 1: 0, 2: 0, 3: 0, 4: 0 }; // Track the index for each con
 ///to do: make dynamic
 export async function connectToDevice() {
   try {
-    console.log("test3.4");
+    console.log("test4.1");
     // request port and open connection
     port = await navigator.serial.requestPort();
     await port.open({ baudRate: 115200 });
@@ -35,7 +35,6 @@ export async function connectToDevice() {
     console.error("Failed to connect to device:", error);
   }
 }
-
 
 export async function flushDevice() {
   if (!writer) {
@@ -70,12 +69,12 @@ export async function queryDevice() {
   }
 }
 
-
 export async function setPulseDuration(duration) {
   if (!writer) {
     console.error("3Device not connected.");
     return;
   }
+
   try {
     const bytes = [
       getByte(duration, 1),
@@ -84,18 +83,11 @@ export async function setPulseDuration(duration) {
       getByte(duration, 4),
     ];
     const command = `mp${String.fromCharCode(...bytes)}`;
-    const utf16Command = encodeUTF8(command);
-    console.log("Setting pulse duration with UTF-16 bytes:", utf16Command);
-    await writer.write(utf16Command);
+    await writer.write(command);
     console.log("Pulse duration set successfully:", duration);
   } catch (error) {
     console.error("Failed to set pulse duration:", error);
   }
-}
-
-function encodeUTF8(str) {
-  const encoder = new TextEncoder(); // Default encoding is UTF-8
-  return encoder.encode(str);
 }
 
 export async function sendTriggerToDevice(command) {
@@ -104,9 +96,8 @@ export async function sendTriggerToDevice(command) {
     return;
   }
   try {
-    const utf8Command = encodeUTF8(command);
-    console.log("Sending UTF-8 encoded command:", utf8Command);
-    await writer.write(utf8Command);
+    console.log("Sending command to device:", command);
+    await writer.write(command);
     console.log("Command sent successfully:", command);
   } catch (error) {
     console.error("Failed to send trigger to device:", error);
@@ -146,9 +137,9 @@ export async function sendTrigger(postIndex) {
       currentCondition
     );
 
-    const command = `mh${String.fromCharCode(
-      currentCondition
-    )}${String.fromCharCode(0)}`;
+    
+
+    const command = new Uint8Array([0x6d, 0x68, currentCondition, 0x00]); // 'mh' + condition + 0
     console.log("Command to send:", command);
 
     await flushDevice();
