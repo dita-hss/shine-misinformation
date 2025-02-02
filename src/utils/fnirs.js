@@ -30,7 +30,7 @@ export async function connectToDevice() {
     reader = port.readable.pipeThrough(textDecoder).getReader();
 
     writer = textEncoder.writable.getWriter();
-    await setPulseDuration(1000);
+    //await setPulseDuration(1000);
 
     console.log("Device connected successfully.");
   } catch (error) {
@@ -44,11 +44,7 @@ export async function flushDevice() {
     return;
   }
   try {
-    if (port.readable && port.writable) {
-      await port.writable.abort(); // Aborts ongoing writes
-      console.log("Serial buffers flushed.");
-    }
-    await writer.write("");
+    await writer.write("\r\n");
     console.log("Device flushed successfully.");
   } catch (error) {
     console.error("Failed to flush device:", error);
