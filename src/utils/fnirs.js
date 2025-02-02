@@ -128,7 +128,7 @@ export async function sendTrigger(postIndex) {
     );
 
     const command = `mh${String.fromCharCode(
-      conditionCode
+      Math.floor(conditionCode)
     )}${String.fromCharCode(0)}`;
     console.log("Command to send:", command);
 
