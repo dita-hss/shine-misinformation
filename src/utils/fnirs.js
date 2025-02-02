@@ -3,79 +3,79 @@ let writer;
 let reader;
 let currentCondition = 1;
 
-///to do: make dynamic
-export async function connectToDevice() {
-  try {
-    console.log("test2.1");
-    // request port and open connection
-    port = await navigator.serial.requestPort();
-    await port.open({ baudRate: 115200 });
-
-    console.log("Port Information:", port.getInfo());
-
-
-    // set up writer and reader
-    const textEncoder = new TextEncoderStream();
-    const textDecoder = new TextDecoderStream();
-
-    textEncoder.readable.pipeTo(port.writable);
-    reader = port.readable.pipeThrough(textDecoder).getReader();
-
-    writer = textEncoder.writable.getWriter();
-
-    console.log("Device connected successfully.");
-  } catch (error) {
-    console.error("Failed to connect to device:", error);
-  }
-}
-
-// let device;
-
+// ///to do: make dynamic
 // export async function connectToDevice() {
 //   try {
-//     console.log("Requesting USB device...");
+//     console.log("test2.1");
+//     // request port and open connection
+//     port = await navigator.serial.requestPort();
+//     await port.open({ baudRate: 115200 });
 
-//     // Request the USB device (replace vendorId with your device's ID)
-//     device = await navigator.usb.requestDevice({
-//       filters: [{ vendorId: 1027 }], // Replace with the correct Vendor ID
-//     });
+//     console.log("Port Information:", port.getInfo());
 
-//     // Open the device and select configuration
-//     await device.open();
-//     await device.selectConfiguration(1);
-//     await device.claimInterface(0); // Most devices use interface 0
 
-//     console.log("Device connected successfully:", device.productName);
+//     // set up writer and reader
+//     const textEncoder = new TextEncoderStream();
+//     const textDecoder = new TextDecoderStream();
 
-//     // Inspect device configurations and endpoints
-//     inspectDeviceEndpoints(device);
+//     textEncoder.readable.pipeTo(port.writable);
+//     reader = port.readable.pipeThrough(textDecoder).getReader();
+
+//     writer = textEncoder.writable.getWriter();
+
+//     console.log("Device connected successfully.");
 //   } catch (error) {
-//     console.error("Failed to connect to USB device:", error);
+//     console.error("Failed to connect to device:", error);
 //   }
 // }
 
-// function inspectDeviceEndpoints(device) {
-//   console.log("Inspecting device configurations...");
+let device;
 
-//   device.configurations.forEach((config, configIndex) => {
-//     console.log(`Configuration ${configIndex + 1}:`, config);
+export async function connectToDevice() {
+  try {
+    console.log("Requesting USB device...");
 
-//     config.interfaces.forEach((iface, ifaceIndex) => {
-//       console.log(`  Interface ${ifaceIndex + 1}:`, iface);
+    // Request the USB device (replace vendorId with your device's ID)
+    device = await navigator.usb.requestDevice({
+      filters: [{ vendorId: 1027 }], // Replace with the correct Vendor ID
+    });
 
-//       iface.alternates.forEach((alt, altIndex) => {
-//         console.log(`    Alternate Setting ${altIndex + 1}:`, alt);
+    // Open the device and select configuration
+    await device.open();
+    await device.selectConfiguration(1);
+    await device.claimInterface(0); // Most devices use interface 0
 
-//         alt.endpoints.forEach((endpoint, epIndex) => {
-//           console.log(`      Endpoint ${epIndex + 1}:`);
-//           console.log(`        Endpoint Number: ${endpoint.endpointNumber}`);
-//           console.log(`        Direction: ${endpoint.direction}`); // 'in' or 'out'
-//           console.log(`        Type: ${endpoint.type}`); // 'bulk', 'interrupt', etc.
-//         });
-//       });
-//     });
-//   });
-// }
+    console.log("Device connected successfully:", device.productName);
+
+    // Inspect device configurations and endpoints
+    inspectDeviceEndpoints(device);
+  } catch (error) {
+    console.error("Failed to connect to USB device:", error);
+  }
+}
+
+function inspectDeviceEndpoints(device) {
+  console.log("Inspecting device configurations...");
+
+  device.configurations.forEach((config, configIndex) => {
+    console.log(`Configuration ${configIndex + 1}:`, config);
+
+    config.interfaces.forEach((iface, ifaceIndex) => {
+      console.log(`  Interface ${ifaceIndex + 1}:`, iface);
+
+      iface.alternates.forEach((alt, altIndex) => {
+        console.log(`    Alternate Setting ${altIndex + 1}:`, alt);
+
+        alt.endpoints.forEach((endpoint, epIndex) => {
+          console.log(`      Endpoint ${epIndex + 1}:`);
+          console.log(`        Endpoint Number: ${endpoint.endpointNumber}`);
+          console.log(`        Direction: ${endpoint.direction}`); // 'in' or 'out'
+          console.log(`        Type: ${endpoint.type}`); // 'bulk', 'interrupt', etc.
+        });
+      });
+    });
+  });
+}
 
 
 export async function flushDevice() {
@@ -192,30 +192,6 @@ export async function sendTrigger(postIndex) {
 
     await sendTriggerToDevice(command);
     await delay(100);
-    const resetCommands = [
-      "reset",
-      "RESET",
-      "*CLS", // SCPI clear status command (sometimes acts as a soft reset)
-      "clear",
-      "CLEAR",
-      "init",
-      "INIT",
-      "esc", // Escape character (ASCII 27)
-      String.fromCharCode(0x1b), // ESC key in ASCII
-      String.fromCharCode(0x03), // CTRL+C (common interrupt signal)
-      String.fromCharCode(0x04), // CTRL+D (end-of-transmission signal)
-    ];
-
-    // Try all reset commands
-    for (const command of resetCommands) {
-      try {
-        console.log(`Trying reset command: ${command}`);
-        await sendTriggerToDevice(command);
-        await delay(500); // Add a delay after each command
-      } catch (error) {
-        console.error(`Failed to send reset command: ${command}`, error);
-      }
-    }
     await flushDevice();
 
     console.log("Command sent successfully.");
