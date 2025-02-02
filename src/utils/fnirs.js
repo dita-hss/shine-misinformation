@@ -19,10 +19,7 @@ export async function connectToDevice() {
     // request port and open connection
     port = await navigator.serial.requestPort();
     await port.open({
-      baudRate: 115200,
-      dataBits: 8,
-      stopBits: 1,
-      parity: "none",
+      baudRate: 115200
     });
 
     // set up writer and reader
