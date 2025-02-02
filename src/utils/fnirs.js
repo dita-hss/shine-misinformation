@@ -34,25 +34,41 @@ let device;
 export async function connectToDevice() {
   try {
     console.log("Requesting USB device...");
-
-    // Request the USB device (replace vendorId with your device's ID)
     device = await navigator.usb.requestDevice({
-      filters: [{ vendorId: 1027 }], // Replace with the correct Vendor ID
+      filters: [{ vendorId: 1027 }],
     });
 
-    // Open the device and select configuration
     await device.open();
     await device.selectConfiguration(1);
-    await device.claimInterface(0); // Most devices use interface 0
 
-    console.log("Device connected successfully:", device.productName);
+    // Log all available interfaces before claiming
+    console.log("Available Interfaces:", device.configuration.interfaces);
 
-    // Inspect device configurations and endpoints
+    // Try claiming different interfaces if interface 0 fails
+    const interfaces = device.configuration.interfaces;
+    let claimed = false;
+
+    for (let i = 0; i < interfaces.length; i++) {
+      try {
+        await device.claimInterface(i);
+        console.log(`Successfully claimed interface ${i}`);
+        claimed = true;
+        break;
+      } catch (claimError) {
+        console.warn(`Unable to claim interface ${i}:`, claimError);
+      }
+    }
+
+    if (!claimed) {
+      throw new Error("Unable to claim any interface.");
+    }
+
     inspectDeviceEndpoints(device);
   } catch (error) {
     console.error("Failed to connect to USB device:", error);
   }
 }
+
 
 function inspectDeviceEndpoints(device) {
   console.log("Inspecting device configurations...");
