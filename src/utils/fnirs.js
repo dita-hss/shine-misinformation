@@ -6,8 +6,8 @@ let currentCondition = 1;
 const conditionMapping = {
   1: [3, 5, 7], // Rest (Stimulus Channel 1)
   2: [6, 10, 18], // Condition 1 (Stimulus Channel 2)
-  3: [12, 20, 28], // Condition 2 (Stimulus Channel 3)
-  4: [24, 40, 56], // Condition 3 (Stimulus Channel 4)
+  3: [20, 28, 60], // Condition 2 (Stimulus Channel 3)
+  4: [40, 56, 72], // Condition 3 (Stimulus Channel 4)
 };
 
 let conditionIndex = { 1: 0, 2: 0, 3: 0, 4: 0 };
