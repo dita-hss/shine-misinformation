@@ -6,13 +6,10 @@ let currentCondition = 1;
 ///to do: make dynamic
 export async function connectToDevice() {
   try {
-    console.log("test2.9");
+    console.log("test3.1");
     // request port and open connection
     port = await navigator.serial.requestPort();
     await port.open({ baudRate: 115200 });
-
-    console.log("Port Information:", port.getInfo());
-
 
     // set up writer and reader
     const textEncoder = new TextEncoderStream();
@@ -30,17 +27,12 @@ export async function connectToDevice() {
 }
 
 export async function flushDevice() {
-  if (!writer || !reader) {
-    console.error("Device not connected.");
+  if (!writer) {
+    console.error("1Device not connected.");
     return;
   }
   try {
-    await writer.write("\n");
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done || !value) break;
-    }
-
+    await writer.write("");
     console.log("Device flushed successfully.");
   } catch (error) {
     console.error("Failed to flush device:", error);
@@ -95,7 +87,7 @@ export async function sendTriggerToDevice(command) {
   }
   try {
     console.log("Sending command to device:", command);
-    await writer.write(`${command}\r\n`);
+    await writer.write(command);
     console.log("Command sent successfully:", command);
   } catch (error) {
     console.error("Failed to send trigger to device:", error);
@@ -141,11 +133,7 @@ export async function sendTrigger(postIndex) {
     console.log("Command to send:", command);
 
     await flushDevice();
-    await delay(100);
     await sendTriggerToDevice(command);
-    await delay(100);
-    await sendTriggerToDevice("reset");
-    await flushDevice();
 
     console.log("Command sent successfully.");
 
@@ -167,8 +155,3 @@ function getConditionCode(count) {
   }
   return 0; // Fallback (should NOT happen)
 }
-
-function delay(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
