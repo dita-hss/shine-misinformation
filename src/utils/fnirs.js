@@ -143,15 +143,23 @@ export async function sendTrigger(postIndex) {
   }
 }
 
+let uniqueCounter = 0; // Global counter to ensure uniqueness
+
 function getConditionCode(count) {
+  let baseCode;
   if (count === 1 || count === 42 || count === 63) {
-    return 1; // "Rest #1", "Rest #2", "Rest #3"
+    baseCode = 1; // "Rest #1", "Rest #2", "Rest #3"
   } else if (count >= 2 && count <= 21) {
-    return 2; // "Condition 1"
+    baseCode = 2; // "Condition 1"
   } else if (count >= 22 && count <= 41) {
-    return 3; // "MIST20"
+    baseCode = 3; // "MIST20"
   } else if (count >= 43 && count <= 62) {
-    return 4; // "Condition 2"
+    baseCode = 4; // "Condition 2"
+  } else {
+    baseCode = 0; // Fallback (should NOT happen)
   }
-  return 0; // Fallback (should NOT happen)
+
+  // Append a unique identifier to the base code
+  const uniqueCode = baseCode + uniqueCounter++ / 100;
+  return uniqueCode;
 }
