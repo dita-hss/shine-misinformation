@@ -142,11 +142,11 @@ export async function sendTrigger(postIndex) {
     )}`;
     console.log("Command to send:", command);
 
-    //await flushDevice();
+    await flushDevice();
     await delay(100);
-    //await sendTriggerToDevice(command);
+    await sendTriggerToDevice(command);
     await delay(100);
-    //await flushDevice();
+    await flushDevice();
     console.log("Command sent successfully.");
     currentCondition++;
   } catch (error) {
