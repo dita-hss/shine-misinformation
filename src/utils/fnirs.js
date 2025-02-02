@@ -4,13 +4,12 @@ let reader;
 let currentCondition = 1;
 
 const conditionMapping = {
-  1: [1, 5, 9],   // Rest
-  2: [2, 6, 10],  // Condition 1
-  3: [3, 7, 11],  // Condition 2
-  4: [4, 8, 12],  // Condition 3
+  1: [1, 1, 1], // Rest (Code: 1)
+  2: [2, 2, 2], // Condition 1 (Code: 2)
+  3: [3, 3, 3], // Condition 2 (Code: 3)
+  4: [4, 4, 4], // Condition 3 (Code: 4)
 };
-
-let conditionIndex = { 1: 0, 2: 0, 3: 0, 4: 0 }; 
+let conditionIndex = { 1: 0, 2: 0, 3: 0, 4: 0 }; // Track the index for each condition
 
 ///to do: make dynamic
 export async function connectToDevice() {
@@ -28,6 +27,8 @@ export async function connectToDevice() {
     reader = port.readable.pipeThrough(textDecoder).getReader();
 
     writer = textEncoder.writable.getWriter();
+
+    await setPulseDuration(1000);
 
     console.log("Device connected successfully.");
   } catch (error) {
@@ -166,6 +167,7 @@ function getLogicalCondition(count) {
   }
   return 0; // Fallback (should NOT happen)
 }
+
 
 function getConditionCode(logicalCode) {
   if (!conditionMapping[logicalCode]) {
