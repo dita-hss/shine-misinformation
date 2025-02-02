@@ -36,16 +36,6 @@ export async function connectToDevice() {
   }
 }
 
-function encodeUTF16(str) {
-  const encoder = new TextEncoder(); // Default encoding is UTF-8
-  const utf16Bytes = [];
-  for (let i = 0; i < str.length; i++) {
-    const charCode = str.charCodeAt(i);
-    utf16Bytes.push(charCode & 0xff); // Low byte
-    utf16Bytes.push((charCode >> 8) & 0xff); // High byte
-  }
-  return new Uint8Array(utf16Bytes);
-}
 
 export async function flushDevice() {
   if (!writer) {
@@ -94,7 +84,7 @@ export async function setPulseDuration(duration) {
       getByte(duration, 4),
     ];
     const command = `mp${String.fromCharCode(...bytes)}`;
-    const utf16Command = encodeUTF16(command);
+    const utf16Command = encodeUTF8(command);
     console.log("Setting pulse duration with UTF-16 bytes:", utf16Command);
     await writer.write(utf16Command);
     console.log("Pulse duration set successfully:", duration);
@@ -103,15 +93,20 @@ export async function setPulseDuration(duration) {
   }
 }
 
+function encodeUTF8(str) {
+  const encoder = new TextEncoder(); // Default encoding is UTF-8
+  return encoder.encode(str);
+}
+
 export async function sendTriggerToDevice(command) {
   if (!writer) {
     console.error("4Device not connected.");
     return;
   }
   try {
-    const utf16Command = encodeUTF16(command);
-    console.log("Sending UTF-16 encoded command:", utf16Command);
-    await writer.write(utf16Command);
+    const utf8Command = encodeUTF8(command);
+    console.log("Sending UTF-8 encoded command:", utf8Command);
+    await writer.write(utf8Command);
     console.log("Command sent successfully:", command);
   } catch (error) {
     console.error("Failed to send trigger to device:", error);
