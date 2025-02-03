@@ -149,12 +149,12 @@ export async function sendTrigger(postIndex) {
     const randomNumber = Math.floor(Math.random() * 4) + 1;
     console.log(randomNumber);
 
-    if (randomNumber === 0) {
+    if (randomNumber === 1) {
       await writer.write(new TextEncoder().encode('mh' + String.fromCharCode(1) + String.fromCharCode(0)));
     }
-    if (randomNumber === 1) {
-      await writer.write(new TextEncoder().encode(command));
-    } if (randomNumber === 2) {
+    if (randomNumber === 2) {
+      await writer.write(new TextEncoder().encode(command)); //
+    } if (randomNumber === 3) {
       await writer.write(new Uint8Array([109, 104, uniqueCode, 0]));
     } if (randomNumber === 4) {
       await writer.write(command);
