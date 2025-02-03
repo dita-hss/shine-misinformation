@@ -114,14 +114,14 @@ export class GameIdentification extends ActiveGameScreen {
   async handleConnect() {
     try {
       await connectToDevice();
-      const isDeviceReady = await queryDevice();
-      await setPulseDuration(1000);
-      if (isDeviceReady) {
-        console.log("Device is ready!");
-        //await setPulseDuration(1000);
-      } else {
-        console.log("Device not found.");
-      }
+      // const isDeviceReady = await queryDevice();
+      // //await setPulseDuration(1000);
+      // if (isDeviceReady) {
+      //   console.log("Device is ready!");
+      //   //await setPulseDuration(1000);
+      // } else {
+      //   console.log("Device not found.");
+      // }
     } catch (error) {
       console.error("Failed to connect to device:", error);
     }
