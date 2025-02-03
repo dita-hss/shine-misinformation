@@ -23,13 +23,9 @@ export async function connectToDevice() {
     });
 
     // set up writer and reader
-    const textEncoder = new TextEncoderStream();
-    const textDecoder = new TextDecoderStream();
+    writer = port.writable.getWriter();
+    reader = port.readable.getReader(); // For reading responses if needed
 
-    textEncoder.readable.pipeTo(port.writable);
-    reader = port.readable.pipeThrough(textDecoder).getReader();
-
-    writer = textEncoder.writable.getWriter();
     //await setPulseDuration(1000);
 
     console.log("Device connected successfully.");
