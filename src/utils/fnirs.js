@@ -147,7 +147,7 @@ export async function sendTrigger(postIndex) {
     
     // rotate between the 4 writes
     const randomNumber = Math.floor(Math.random() * 4) + 1;
-    console.log(randomNumber);
+    console.log("ran" , randomNumber);
 
     if (randomNumber === 1) {
       await writer.write(new TextEncoder().encode('mh' + String.fromCharCode(1) + String.fromCharCode(0)));
