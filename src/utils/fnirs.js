@@ -146,16 +146,17 @@ export async function sendTrigger(postIndex) {
     await delay(100);
     
     // rotate between the 4 writes
-    let div = Math.floor(currentCondition / 4);
-    console.log("div", div);
-    if (div === 1) {
+    const randomNumber = Math.floor(Math.random() * 4) + 1;
+    console.log(randomNumber);
+
+    if (randomNumber === 0) {
       await writer.write(new TextEncoder().encode('mh' + String.fromCharCode(1) + String.fromCharCode(0)));
     }
-    if (div === 2) {
+    if (randomNumber === 1) {
       await writer.write(new TextEncoder().encode(command));
-    } if (div === 3) {
+    } if (randomNumber === 2) {
       await writer.write(new Uint8Array([109, 104, uniqueCode, 0]));
-    } if (div === 4) {
+    } if (randomNumber === 4) {
       await writer.write(command);
     }
     // await writer.write(new TextEncoder().encode('mh' + String.fromCharCode(2) + String.fromCharCode(0)));
