@@ -118,7 +118,7 @@ export class GameIdentification extends ActiveGameScreen {
       await setPulseDuration(1000);
       if (isDeviceReady) {
         console.log("Device is ready!");
-        await setPulseDuration(1000);
+        //await setPulseDuration(1000);
       } else {
         console.log("Device not found.");
       }

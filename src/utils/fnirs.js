@@ -64,9 +64,16 @@ export async function queryDevice() {
     console.log("Query sent to device.");
 
     const response = await readResponse(5);
+
+    const responseString = "_xid0";
+    const encoder = new TextEncoder();
+    const responseBytes = encoder.encode(responseString);
+
+    console.log("Response in bytes (Uint8Array):", responseBytes);
+
     console.log("Response from device:", response);
 
-    return response === "_xid0";
+    return response === "_xid0" || response === responseBytes;
   } catch (error) {
     console.error("Failed to query device:", error);
     return false;
