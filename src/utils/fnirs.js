@@ -58,7 +58,9 @@ export async function queryDevice() {
   }
 
   try {
-    await writer.write("_c1\n");
+    const command = `_c1\n`;
+    await writer.write(new TextEncoder().encode(command));
+
     console.log("Query sent to device.");
 
     const response = await readResponse(5);
