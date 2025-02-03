@@ -17,15 +17,11 @@ module.exports = {
             if (scopePluginIndex >= 0) {
                 webpackConfig.resolve.plugins.splice(scopePluginIndex, 1);
             }
-            // webpackConfig.resolve.fallback = {
-            //   ...webpackConfig.resolve.fallback,
-            //   stream: require.resolve("stream-browserify"),
-            //   buffer: require.resolve("buffer/"),
-            // };
-            
+
 
 
             return webpackConfig;
         }
     }
 }
+

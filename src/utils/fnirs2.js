@@ -4,10 +4,10 @@ let reader;
 let currentCondition = 1;
 
 const conditionMapping = {
-  1: [1], // Rest (Stimulus Channel 1)
-  2: [2], // Condition 1 (Stimulus Channel 2)
-  3: [3], // Condition 2 (Stimulus Channel 3)
-  4: [4] // Condition 3 (Stimulus Channel 4)
+  1: [3, 5, 7], // Rest (Stimulus Channel 1)
+  2: [6, 10, 18], // Condition 1 (Stimulus Channel 2)
+  3: [20, 28, 60], // Condition 2 (Stimulus Channel 3)
+  4: [40, 56, 72], // Condition 3 (Stimulus Channel 4)
 };
 
 let conditionIndex = { 1: 0, 2: 0, 3: 0, 4: 0 };
@@ -15,7 +15,7 @@ let conditionIndex = { 1: 0, 2: 0, 3: 0, 4: 0 };
 ///to do: make dynamic
 export async function connectToDevice() {
   try {
-    console.log("test6.1");
+    console.log("test5.1");
     // request port and open connection
     port = await navigator.serial.requestPort();
     await port.open({
@@ -23,7 +23,7 @@ export async function connectToDevice() {
     });
 
     // set up writer and reader
-    const textEncoder = new TextEncoderStream();
+    const textEncoder = new TextEncoderStream("ascii");
     const textDecoder = new TextDecoderStream();
 
     textEncoder.readable.pipeTo(port.writable);
@@ -92,7 +92,6 @@ export async function setPulseDuration(duration) {
   }
 }
 
-
 function getByte(val, index) {
   return (val >> (8 * (index - 1))) & 255;
 }
@@ -113,7 +112,7 @@ async function readResponse(length) {
 export async function sendTrigger(postIndex) {
   try {
     console.log("Preparing to send trigger...");
-    const logicalCode = getLogicalCondition(currentCondition); 
+    const logicalCode = getLogicalCondition(currentCondition);
     const uniqueCode = getConditionCode(logicalCode);
     console.log(
       "Post index:",
@@ -131,25 +130,12 @@ export async function sendTrigger(postIndex) {
     )}`;
     console.log("Command to send:", command);
 
-
-    //await flushDevice();
+    await flushDevice();
     await delay(100);
     await writer.write(command);
     await delay(100);
-    //await flushDevice();
+    await flushDevice();
     console.log("Command sent successfully.");
-
-    const response = await readResponse(4);
-    console.log("Raw bytes received:", response);
-    console.log(
-      "Raw byte values:",
-      response.split("").map((char) => char.charCodeAt(0))
-    );
-
-    // // Clear buffer after reading
-    // while (port.readable.locked) {
-    //   await reader.cancel(); // Release reader lock to flush buffer
-    // }
     currentCondition++;
   } catch (error) {
     console.error("Failed to send trigger to device:", error);
@@ -157,7 +143,7 @@ export async function sendTrigger(postIndex) {
 }
 
 function getLogicalCondition(count) {
-  if (count === 1 || count===  22|| count === 42) {
+  if (count === 1 || count === 22 || count === 42) {
     return 1; // "Rest"
   } else if (count >= 2 && count <= 21) {
     return 2; // "Condition 1"
