@@ -129,12 +129,23 @@ export async function sendTrigger(postIndex) {
     const command = `mh${String.fromCharCode(uniqueCode)}${String.fromCharCode(
       0
     )}`;
+
+    
+
     //const command = new Uint8Array([109, 104, uniqueCode, 0]);
 
     console.log("Command to send:", command);
     console.log("matlab comparison", Array.from(new TextEncoder().encode(command)));
     console.log("matlab comparison2", command);
     console.log("matlab comparison3", new Uint8Array([109, 104, uniqueCode, 0]));
+
+
+    const encoder = new TextEncoder("ascii");
+    const commandBytes = encoder.encode(
+      `mh${String.fromCharCode(uniqueCode)}${String.fromCharCode(0)}`
+    );
+    await writer.write(commandBytes);
+
 
 
 
@@ -144,7 +155,7 @@ export async function sendTrigger(postIndex) {
     
     //await writer.write(new TextEncoder().encode('mh' + String.fromCharCode(2) + String.fromCharCode(0)));
     //await writer.write(new TextEncoder().encode(command));
-    await writer.write(new Uint8Array([109, 104, uniqueCode, 0]));
+    //await writer.write(new Uint8Array([109, 104, uniqueCode, 0]));
     //await writer.write(command);
     await delay(100);
     //await flushDevice();
