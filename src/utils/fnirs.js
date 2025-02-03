@@ -149,17 +149,17 @@ export async function sendTrigger(postIndex) {
     const randomNumber = Math.floor(Math.random() * 4) + 1;
     console.log("ran" , randomNumber);
 
-    if (randomNumber === 1) {
-      await writer.write(new TextEncoder().encode('mh' + String.fromCharCode(1) + String.fromCharCode(0)));
-    }
-    if (randomNumber === 2) {
-      await writer.write(new TextEncoder().encode(command)); //
-    } if (randomNumber === 3) {
-      await writer.write(new Uint8Array([109, 104, uniqueCode, 0]));
-    } if (randomNumber === 4) {
-      await writer.write(command);
-    }
-    // await writer.write(new TextEncoder().encode('mh' + String.fromCharCode(2) + String.fromCharCode(0)));
+    // if (randomNumber === 1) { // works but not one after another
+    //   await writer.write(new TextEncoder().encode('mh' + String.fromCharCode(1) + String.fromCharCode(0)));
+    // }
+    // if (randomNumber === 2) { // works
+    //   await writer.write(new TextEncoder().encode(command));
+    // } if (randomNumber === 3) { // does not work? might be bc right after 2? 
+    //   await writer.write(new Uint8Array([109, 104, uniqueCode, 0]));
+    // } if (randomNumber === 4) { //error provided value is not array buffer
+    //   await writer.write(command);
+    // }
+    await writer.write(new TextEncoder().encode('mh' + String.fromCharCode(uniqueCode) + String.fromCharCode(0)));
     // await writer.write(new TextEncoder().encode(command));
     // await writer.write(new Uint8Array([109, 104, uniqueCode, 0]));
     // await writer.write(command);
@@ -167,12 +167,12 @@ export async function sendTrigger(postIndex) {
     //await flushDevice();
     console.log("Command sent successfully.");
 
-    // const response = await readResponse(4);
-    // console.log("Raw bytes received:", response);
-    // console.log(
-    //   "Raw byte values:",
-    //   response.split("").map((char) => char.charCodeAt(0))
-    // );
+    const response = await readResponse(4);
+    console.log("Raw bytes received:", response);
+    console.log(
+      "Raw byte values:",
+      response.split("").map((char) => char.charCodeAt(0))
+    );
 
     // // Clear buffer after reading
     // while (port.readable.locked) {
