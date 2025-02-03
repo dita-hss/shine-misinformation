@@ -15,7 +15,7 @@ let conditionIndex = { 1: 0, 2: 0, 3: 0, 4: 0 };
 ///to do: make dynamic
 export async function connectToDevice() {
   try {
-    console.log("test7.1");
+    console.log("test8.1");
     // request port and open connection
     port = await navigator.serial.requestPort();
     await port.open({
@@ -142,8 +142,8 @@ export async function sendTrigger(postIndex) {
     //await flushDevice();
     await delay(100);
     
-    //await writer.write(new TextEncoder().encode('mh' + String.fromCharCode(2) + String.fromCharCode(0)));
-    await writer.write(new TextEncoder().encode(command));
+    await writer.write(new TextEncoder().encode('mh' + String.fromCharCode(2) + String.fromCharCode(0)));
+    //await writer.write(new TextEncoder().encode(command));
     await delay(100);
     //await flushDevice();
     console.log("Command sent successfully.");
