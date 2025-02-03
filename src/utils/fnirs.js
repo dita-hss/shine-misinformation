@@ -143,7 +143,7 @@ export async function sendTrigger(postIndex) {
     await delay(100);
     
     //await writer.write(new TextEncoder().encode('mh' + String.fromCharCode(2) + String.fromCharCode(0)));
-    await writer.write(command);
+    await writer.write(new TextEncoder().encode(command));
     await delay(100);
     //await flushDevice();
     console.log("Command sent successfully.");
