@@ -19,7 +19,11 @@ export async function connectToDevice() {
     // request port and open connection
     port = await navigator.serial.requestPort();
     await port.open({
-      baudRate: 115200,
+      baudRate: 115200, 
+      dataBits: 8,
+      stopBits: 1,
+      parity: "none",
+      flowControl: "none",
     });
 
     // set up writer and reader
@@ -122,9 +126,7 @@ export async function sendTrigger(postIndex) {
       currentCondition
     );
 
-    const command = `mh${String.fromCharCode(uniqueCode)}${String.fromCharCode(
-      0
-    )}`;
+    const command = `mh${String.fromCharCode(uniqueCode)}${String.fromCharCode(0)}\n`;
 
     
 
@@ -144,10 +146,6 @@ export async function sendTrigger(postIndex) {
 
     //await flushDevice();
     await delay(100);
-    
-    // rotate between the 4 writes
-    const randomNumber = Math.floor(Math.random() * 4) + 1;
-    console.log("ran" , randomNumber);
 
     // if (randomNumber === 1) { // works but not one after another
     //   await writer.write(new TextEncoder().encode('mh' + String.fromCharCode(1) + String.fromCharCode(0)));
@@ -159,25 +157,13 @@ export async function sendTrigger(postIndex) {
     // } if (randomNumber === 4) { //error provided value is not array buffer
     //   await writer.write(command);
     // }
-    await writer.write(new TextEncoder().encode('mh' + String.fromCharCode(uniqueCode) + String.fromCharCode(0)));
-    // await writer.write(new TextEncoder().encode(command));
+    //await writer.write(new TextEncoder().encode('mh' + String.fromCharCode(uniqueCode) + String.fromCharCode(0)));
+    await writer.write(new TextEncoder().encode(command));
     // await writer.write(new Uint8Array([109, 104, uniqueCode, 0]));
     // await writer.write(command);
     await delay(100);
     //await flushDevice();
     console.log("Command sent successfully.");
-
-    const response = await readResponse(4);
-    console.log("Raw bytes received:", response);
-    console.log(
-      "Raw byte values:",
-      response.split("").map((char) => char.charCodeAt(0))
-    );
-
-    // // Clear buffer after reading
-    // while (port.readable.locked) {
-    //   await reader.cancel(); // Release reader lock to flush buffer
-    // }
     currentCondition++;
   } catch (error) {
     console.error("Failed to send trigger to device:", error);
