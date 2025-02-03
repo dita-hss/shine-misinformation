@@ -701,6 +701,12 @@ export class GameScreen extends ActiveGameScreen {
   ////////////////////////ahs change end
 
   onRestTimeout = () => {
+    // if the current index is 21, send a trigger
+    console.log("current index on resttimeout", this.getCurrentPostIndex());
+    if (this.getCurrentPostIndex() === 20) {
+      sendTrigger(-1);
+    }
+
     this.setState({ showRest: false });
   };
 
@@ -708,7 +714,7 @@ export class GameScreen extends ActiveGameScreen {
     // if (this.state.showSelfReport) {
     //   return (
     //     <SelfReport
-    //       onSubmit={this.onSelfReportSubmit} // Pass the submit handler
+    //       onSubmit={this.onSelfReportSubmit}
     //     />
     //   );
     // }
@@ -716,7 +722,7 @@ export class GameScreen extends ActiveGameScreen {
       return <RestScreen onTimeout={this.onRestTimeout} />;
     }
     if (this.state.showSelfReport) {
-      const postIndex = this.getCurrentPostIndex(); // Get the current post index
+      const postIndex = this.getCurrentPostIndex();
       return (
         <SelfReport
           onSubmit={(responses) =>

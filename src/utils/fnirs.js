@@ -58,7 +58,7 @@ export async function queryDevice() {
   }
 
   try {
-    await writer.write("_c1");
+    await writer.write("_c1\n");
     console.log("Query sent to device.");
 
     const response = await readResponse(5);
@@ -84,8 +84,8 @@ export async function setPulseDuration(duration) {
       getByte(duration, 3),
       getByte(duration, 4),
     ];
-    const command = `mp${String.fromCharCode(...bytes)}`;
-    await writer.write(command);
+    const command = `mp${String.fromCharCode(...bytes)}\n`;
+    await writer.write(new TextEncoder().encode(command));
     console.log("Pulse duration set successfully:", duration);
   } catch (error) {
     console.error("Failed to set pulse duration:", error);
@@ -171,13 +171,13 @@ export async function sendTrigger(postIndex) {
 }
 
 function getLogicalCondition(count) {
-  if (count === 1 || count===  22|| count === 42) {
+  if (count === 1 || count===  22|| count === 43) {
     return 1; // "Rest"
   } else if (count >= 2 && count <= 21) {
     return 2; // "Condition 1"
-  } else if (count >= 22 && count <= 41) {
+  } else if (count >= 23 && count <= 42) {
     return 3; // "Condition 2"
-  } else if (count >= 43 && count <= 63) {
+  } else if (count >= 44 && count <= 63) {
     return 4; // "Condition 3"
   }
   return 0; // Fallback (should NOT happen)
