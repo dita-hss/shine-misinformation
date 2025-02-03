@@ -129,22 +129,31 @@ export async function sendTrigger(postIndex) {
     const command = `mh${String.fromCharCode(uniqueCode)}${String.fromCharCode(
       0
     )}`;
+    //const command = new Uint8Array([109, 104, uniqueCode, 0]);
+
     console.log("Command to send:", command);
+    console.log("matlab comparison", Array.from(new TextEncoder().encode(command)));
+    console.log("matlab comparison2", command);
+    console.log("matlab comparison3", new Uint8Array([109, 104, uniqueCode, 0]));
+
+
 
 
     //await flushDevice();
     await delay(100);
+    
+    //await writer.write(new TextEncoder().encode('mh' + String.fromCharCode(2) + String.fromCharCode(0)));
     await writer.write(command);
     await delay(100);
     //await flushDevice();
     console.log("Command sent successfully.");
 
-    const response = await readResponse(4);
-    console.log("Raw bytes received:", response);
-    console.log(
-      "Raw byte values:",
-      response.split("").map((char) => char.charCodeAt(0))
-    );
+    // const response = await readResponse(4);
+    // console.log("Raw bytes received:", response);
+    // console.log(
+    //   "Raw byte values:",
+    //   response.split("").map((char) => char.charCodeAt(0))
+    // );
 
     // // Clear buffer after reading
     // while (port.readable.locked) {
