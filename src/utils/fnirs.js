@@ -136,23 +136,32 @@ export async function sendTrigger(postIndex) {
     console.log("matlab comparison3", new Uint8Array([109, 104, uniqueCode, 0]));
 
 
-    const encoder = new TextEncoder("ascii");
-    const commandBytes = encoder.encode(
-      `mh${String.fromCharCode(uniqueCode)}${String.fromCharCode(0)}`
-    );
-    await writer.write(commandBytes);
-
-
-
-
+    // const encoder = new TextEncoder("ascii");
+    // const commandBytes = encoder.encode(
+    //   `mh${String.fromCharCode(uniqueCode)}${String.fromCharCode(0)}`
+    // );
+    //await writer.write(commandBytes);
 
     //await flushDevice();
     await delay(100);
     
-    //await writer.write(new TextEncoder().encode('mh' + String.fromCharCode(2) + String.fromCharCode(0)));
-    //await writer.write(new TextEncoder().encode(command));
-    //await writer.write(new Uint8Array([109, 104, uniqueCode, 0]));
-    //await writer.write(command);
+    // rotate between the 4 writes
+    let div = Math.floor(currentCondition / 4);
+    console.log("div", div);
+    if (div === 1) {
+      await writer.write(new TextEncoder().encode('mh' + String.fromCharCode(1) + String.fromCharCode(0)));
+    }
+    if (div === 2) {
+      await writer.write(new TextEncoder().encode(command));
+    } if (div === 3) {
+      await writer.write(new Uint8Array([109, 104, uniqueCode, 0]));
+    } if (div === 4) {
+      await writer.write(command);
+    }
+    // await writer.write(new TextEncoder().encode('mh' + String.fromCharCode(2) + String.fromCharCode(0)));
+    // await writer.write(new TextEncoder().encode(command));
+    // await writer.write(new Uint8Array([109, 104, uniqueCode, 0]));
+    // await writer.write(command);
     await delay(100);
     //await flushDevice();
     console.log("Command sent successfully.");
