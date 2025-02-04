@@ -174,6 +174,7 @@ export class GameScreen extends ActiveGameScreen {
       ...this.defaultState,
       showRest: true,
       currentRestIndex: 0,
+      prompt_number: 1,
 
       error: null,
       haveShownPrompt: false,
@@ -304,9 +305,8 @@ export class GameScreen extends ActiveGameScreen {
       -3
     )}.${milliseconds} ${timePart.slice(-2)}`;
 
-    console.log("update interaction", formattedTime, "time", time);
-
     const postIndex = this.state.haveShownPrompt ? 39 : 0;
+    console.log("update interaction", formattedTime, "time", time, "postIndex", postIndex);
     const updatedInteractions = this.state.interactions.update(
       postIndex,
       this.state.interactions
@@ -318,6 +318,7 @@ export class GameScreen extends ActiveGameScreen {
       dismissedPrompt: true,
       haveShownPrompt: true,
       interactions: updatedInteractions,
+      prompt_number: 3,
     });
 
     sendTrigger(this.getCurrentPostIndex());
@@ -581,6 +582,7 @@ export class GameScreen extends ActiveGameScreen {
     if (study.uiSettings.displayPostsInFeed) {
       this.scrollToNextPost(true);
     } else {
+
       this.setState(
         (state) => {
           const inters = state.interactions;
@@ -703,8 +705,14 @@ export class GameScreen extends ActiveGameScreen {
   onRestTimeout = () => {
     // if the current index is 21, send a trigger
     console.log("current index on resttimeout", this.getCurrentPostIndex());
+    // if (this.getCurrentPostIndex() === 20) {
+    //   sendTrigger(-1);
+    // }
     if (this.getCurrentPostIndex() === 20) {
-      sendTrigger(-1);
+      this.setState({ showRest: false, dismissedPrompt: false });
+      this.state.prompt_number = 2;
+      //break out of the function
+      return;
     }
 
     this.setState({ showRest: false });
@@ -818,6 +826,8 @@ export class GameScreen extends ActiveGameScreen {
               }
             />
           </div>
+
+
         );
       }
     }
@@ -827,6 +837,7 @@ export class GameScreen extends ActiveGameScreen {
         {displayPrompt && (
           <GamePrompt
             study={study}
+            prompt_number={this.state.prompt_number}
             onClick={(enabled) => {
               if (enabled) {
                 this.onPromptContinue(study);
