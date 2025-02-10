@@ -184,7 +184,7 @@ function constructWorkbook(study, results, problems) {
           participant.followerHistory[stateIndex + 1]
         );
 
-        // Extract the first (post shown) and last (self-report started) timestamps
+        // the first (post shown) and last time it is seen timestamps
         if (interactionTimesRelative.length > 0) {
           const firstRelativeTimestamp = interactionTimesRelative[0]; // When post is first shown (relative)
           const lastRelativeTimestamp =

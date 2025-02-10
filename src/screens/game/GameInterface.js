@@ -657,13 +657,13 @@ export class GameScreen extends ActiveGameScreen {
     const currentPostIndex = this.getCurrentPostIndex();
     console.log("currentPostIndex", currentPostIndex);
 
-    if (currentPostIndex === 40 && !this.state.haveShownRest2) {
+    if (currentPostIndex === 39 && !this.state.haveShownRest2) {
       // Show rest screen before prompt at post 39
       this.setState({ showRest: true, haveShownRest2: true });
       //sendTrigger(-1);
     }
 
-    if (currentPostIndex === 20 && !this.state.haveShownRest) {
+    if (currentPostIndex === 19 && !this.state.haveShownRest) {
       this.setState({ showRest: true, haveShownRest: true });
       //sendTrigger(-1);
     }
