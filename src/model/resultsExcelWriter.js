@@ -4,7 +4,6 @@ import {createDateFromUnixEpochTimeSeconds, formatUTCDate} from "../utils/time";
 
 const excel = require("exceljs");
 
-
 /**
  * Makes the header row bold.
  */
@@ -86,6 +85,10 @@ function constructWorkbook(study, results, problems) {
     coverWorksheet.getCell("C2").alignment = {vertical: "top", horizontal: "left"};
     styleWorksheetHeader(coverWorksheet);
 
+    let masterTimestamps = [];  // all timestamps for all posts , when post is first shown, when post dissappears
+    let masterAllTimestamps = [];  // This will store all timestamps including interactions
+
+
     // We store all post reactions into one worksheet.
     let containsAnyPosts = false;
     const postsWorksheet = workbook.addWorksheet("Posts");
@@ -132,6 +135,7 @@ function constructWorkbook(study, results, problems) {
         {header: "Followers After", key: "afterFollowers", width: 22, enabled: showFollowers},
     ]);
     
+    
     for(let index = 0; index < results.length; index++) {
       const game = results[index];
       const participant = game.participant;
@@ -139,8 +143,6 @@ function constructWorkbook(study, results, problems) {
       //console.log("Start Time: " + startTime);
       const endTime = game.endTime; // Experiment end time
       for (let stateIndex = 0; stateIndex < game.states.length; stateIndex++) {
-
-
         const state = game.states[stateIndex];
         const likes = state.currentPost.numberOfReactions.like;
         const dislikes = state.currentPost.numberOfReactions.dislike;
@@ -149,15 +151,25 @@ function constructWorkbook(study, results, problems) {
         const interaction = participant.postInteractions.get(stateIndex);
 
         ////
-        const interactionTimesUnrelative = interaction.timer.interactionTimesUnrelative || [];
+        const interactionTimesUnrelative =
+          interaction.timer.interactionTimesUnrelative || [];
         const relativeInteractionTimes = interactionTimesUnrelative.map(
           (time) => time - startTime
         );
 
+        let interactionTimesRelative = interaction.timer.interactionTimesRelative || [];
+          if (interactionTimesRelative.length === 0 && interaction.timer.interactionTimesUnrelative) {
+    const interactionTimesUnrelative = interaction.timer.interactionTimesUnrelative;
+    interactionTimesRelative = interactionTimesUnrelative.map(time => time - startTime);
+  }
+
+
         // Combine into a single array
-        const allRelativeTimes = [...relativeInteractionTimes].sort((a, b) => a - b);
+        const allRelativeTimes = [...relativeInteractionTimes].sort(
+          (a, b) => a - b
+        );
         ////
-        
+
         //console.log(interaction.shareTargets);
         const beforeCredibility = Math.round(
           participant.credibilityHistory[stateIndex]
@@ -171,6 +183,18 @@ function constructWorkbook(study, results, problems) {
         const afterFollowers = Math.round(
           participant.followerHistory[stateIndex + 1]
         );
+
+        // Extract the first (post shown) and last (self-report started) timestamps
+        if (interactionTimesRelative.length > 0) {
+          const firstRelativeTimestamp = interactionTimesRelative[0]; // When post is first shown (relative)
+          const lastRelativeTimestamp =
+            interactionTimesRelative[interactionTimesRelative.length - 1]; // When self-report starts (relative)
+
+          // Add to master list
+          masterAllTimestamps.push(...interactionTimesRelative);
+          masterTimestamps.push(firstRelativeTimestamp);
+          masterTimestamps.push(lastRelativeTimestamp);
+        }
 
         // if the shared with targets is an empty array , change it to an empty string
 
@@ -209,7 +233,8 @@ function constructWorkbook(study, results, problems) {
             interaction.timer.getTimeToLastInteractMS()
           ),
           interactionListTime: interaction.timer.interactionTimesFormatted,
-          interactionListTimeUnrelative: interaction.timer.interactionTimesUnrelative,
+          interactionListTimeUnrelative:
+            interaction.timer.interactionTimesUnrelative,
           interactionListTimeRelative: allRelativeTimes,
 
           credibilityChange: afterCredibility - beforeCredibility,
@@ -223,6 +248,46 @@ function constructWorkbook(study, results, problems) {
         containsAnyPosts = true;
       }
     }
+
+    const firstEventTime = masterTimestamps[0];
+
+    // adjustnig all timestamps to be relative to the first event
+    const adjustedMasterTimestamps = masterTimestamps.map(
+      (time) => time - firstEventTime
+    );
+
+    const adjustedAllMasterTimestamps = masterAllTimestamps.map(
+      (time) => time - firstEventTime
+    );
+
+  const masterWorksheet = workbook.addWorksheet("Master Timestamps");
+setWorksheetColumns(masterWorksheet, [
+  { header: "Relative Timestamp (MS)", key: "timestamp", width: 30 },
+]);
+
+adjustedMasterTimestamps.forEach((timestamp) => {
+
+  masterWorksheet.addRow({
+    timestamp: timestamp  });
+});
+
+
+const masterAllWorksheet = workbook.addWorksheet("Master All Timestamps");
+setWorksheetColumns(masterAllWorksheet, [
+  {
+    header: "Relative Timestamp (MS) with Interactions",
+    key: "timestamp",
+    width: 30,
+  },
+]);
+
+
+adjustedAllMasterTimestamps.forEach((timestamp) => {
+  masterAllWorksheet.addRow({
+    timestamp: timestamp,
+  });
+});
+
     styleWorksheetHeader(postsWorksheet);
     if (!containsAnyPosts) {
         workbook.removeWorksheet(postsWorksheet.name);

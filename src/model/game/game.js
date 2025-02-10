@@ -360,8 +360,19 @@ export class Game {
             getUnixEpochTimeSeconds(),
             null, [], participant, null, false, Date.now(), null
         );
+
+         const time = Date.now();
+         const date = new Date(time);
+         const datePart = date.toLocaleDateString();
+         const timePart = date.toLocaleTimeString();
+         const milliseconds = String(date.getMilliseconds()).padStart(3, "0");
+         const formattedTime = `${datePart}, ${timePart.slice(
+           0,
+           -3
+         )}.${milliseconds} ${timePart.slice(-2)}`;
         console.log("Game started now at: " + getUnixEpochTimeSeconds());
         console.log("Game started now at: " + Date.now());
+        console.log("Game started now at: " + formattedTime);
         game.calculateAllStates();
         game.saveLocally();
         return game;

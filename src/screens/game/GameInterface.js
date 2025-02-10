@@ -589,17 +589,15 @@ export class GameScreen extends ActiveGameScreen {
           return {
             showSelfReport: true,
             interactions: inters.update(
-              this.getCurrentPostIndex(),
-              inters
-                .get(this.getCurrentPostIndex())
-                .withStartSelfReportResponses()
+              currentPostIndex,
+              inters.get(currentPostIndex).withStartSelfReportResponses()
             ),
             dismissedPrompt:
               this.getCurrentPostIndex() === 39 ? false : state.dismissedPrompt,
           };
         },
         () => {
-          this.submitPost(this.getCurrentPostIndex());
+          //this.submitPost(this.getCurrentPostIndex());
         }
       );
 
@@ -653,8 +651,11 @@ export class GameScreen extends ActiveGameScreen {
 
   ////////////////a.h.s change: added the following functions to save the state of the game
   onSelfReportSubmit = (postIndex, responses) => {
+    console.log("Submitting self-report for post index:", postIndex);
+
     //console.log("on the self report", responses);
     const currentPostIndex = this.getCurrentPostIndex();
+    console.log("currentPostIndex", currentPostIndex);
 
     if (currentPostIndex === 40 && !this.state.haveShownRest2) {
       // Show rest screen before prompt at post 39
@@ -684,7 +685,7 @@ export class GameScreen extends ActiveGameScreen {
       () => {
         //this.onNextPost();
         const currentPostIndex = this.getCurrentPostIndex();
-        this.submitPost(currentPostIndex);
+        this.submitPost(postIndex);
       }
     );
   };

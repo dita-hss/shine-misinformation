@@ -171,7 +171,7 @@ export class InteractionTimer {
     // Add the formatted date if it's not already in the array and not within 1ms of the last one
     if (
       (!lastInteractionTimeTemp ||
-        Math.abs(time - lastInteractionTimeTemp) > 1) &&
+        Math.abs(time - lastInteractionTimeTemp) > 10) &&
       !this.interactionTimesFormatted.includes(formattedDate)
     ) {
       this.interactionTimesFormatted.push(formattedDate);
