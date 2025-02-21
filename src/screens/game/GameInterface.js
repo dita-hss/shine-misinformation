@@ -14,33 +14,9 @@ import {DynamicFeedbackController} from "./dynamicFeedback";
 import SelfReport from "./SelfReport.js";
 import RestScreen from "./RestScreen.js";
 import {
-  connectToDevice,
-  queryDevice,
-  setPulseDuration,
-  sendTriggerToDevice,
   sendTrigger
 } from "../../utils/fnirs";
-// document.addEventListener("DOMContentLoaded", () => {
-//   const connectButton = document.getElementById("connect");
-//   if (connectButton) {
-//     connectButton.addEventListener("click", async () => {
-//       await connectToDevice();
-
-//       const isDeviceReady = await queryDevice();
-//       if (isDeviceReady) {
-//         console.log("Device is ready!");
-//         await setPulseDuration(1000);
-//       } else {
-//         console.log("Device not found.");
-//       }
-//     });
-//   } else {
-//     console.error("Connect button not found in the DOM.");
-//   }
-// });
-
-
-
+import { logTimestamp } from '../../utils/timestamp.js';
 
 // We want to ensure that we have smooth element scrollIntoView behaviour.
 smoothscroll.polyfill();
@@ -306,7 +282,7 @@ export class GameScreen extends ActiveGameScreen {
     )}.${milliseconds} ${timePart.slice(-2)}`;
 
     const postIndex = this.state.haveShownPrompt ? 39 : 0;
-    console.log("update interaction", formattedTime, "time", time, "postIndex", postIndex);
+    //console.log("update interaction", formattedTime, "time", time, "postIndex", postIndex);
     const updatedInteractions = this.state.interactions.update(
       postIndex,
       this.state.interactions
@@ -322,6 +298,7 @@ export class GameScreen extends ActiveGameScreen {
     });
 
     sendTrigger(this.getCurrentPostIndex());
+    logTimestamp("firstshown");
 
 
     if (!study.uiSettings.displayPostsInFeed) {
@@ -330,6 +307,7 @@ export class GameScreen extends ActiveGameScreen {
   }
 
   onPostReaction(postIndex, reaction, study) {
+    logTimestamp("interactions");
     this.setState((state) => {
       const inters = state.interactions;
       return {
@@ -566,7 +544,7 @@ export class GameScreen extends ActiveGameScreen {
   }
 
   onNextPost() {
-    console.log("Next post clicked.");
+    //console.log("Next post clicked.");
     const game = this.state.game;
     if (!game) throw new Error("There is no active game!");
 
@@ -574,8 +552,8 @@ export class GameScreen extends ActiveGameScreen {
     const currentPostIndex = this.getCurrentPostIndex();
     const shouldShowPromptAgain = currentPostIndex === 39;
 
-    console.log("currentPostIndex", currentPostIndex);
-    console.log("Should show prompt again:", shouldShowPromptAgain);
+    //console.log("currentPostIndex", currentPostIndex);
+    //console.log("Should show prompt again:", shouldShowPromptAgain);
 
     if (currentPostIndex >= study.basicSettings.length) return;
 
@@ -651,24 +629,28 @@ export class GameScreen extends ActiveGameScreen {
 
   ////////////////a.h.s change: added the following functions to save the state of the game
   onSelfReportSubmit = (postIndex, responses) => {
-    console.log("Submitting self-report for post index:", postIndex);
+    //console.log("Submitting self-report for post index:", postIndex);
 
     //console.log("on the self report", responses);
     const currentPostIndex = this.getCurrentPostIndex();
-    console.log("currentPostIndex", currentPostIndex);
+    //console.log("currentPostIndex", currentPostIndex);
 
     if (currentPostIndex === 39 && !this.state.haveShownRest2) {
       // Show rest screen before prompt at post 39
       this.setState({ showRest: true, haveShownRest2: true });
       //sendTrigger(-1);
-    }
-
-    if (currentPostIndex === 19 && !this.state.haveShownRest) {
+      logTimestamp("rest");
+    } else if (currentPostIndex === 19 && !this.state.haveShownRest) {
       this.setState({ showRest: true, haveShownRest: true });
       //sendTrigger(-1);
+      logTimestamp("rest");
+    } else if (currentPostIndex !== 59) {
+      logTimestamp("firstshown");
     }
     
     sendTrigger(currentPostIndex);
+    
+    
 
     // Update interactions and set showSelfReport to false, then call onNextPost
     this.setState(

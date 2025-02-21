@@ -51,7 +51,7 @@ export class ParticipantProgress extends Component {
         const stringPercent = this.props.displayProgress  ? `(${this.props.progressPercentage}%)` : '';
 
         const onNextPost = () => {
-            console.log("Next post clicked");
+            //console.log("Next post clicked");
             if (nextPostEnabled) {
                 this.props.onNextPost();
             }

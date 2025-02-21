@@ -35,7 +35,7 @@ class SelfReport extends Component {
       seenBefore,
     };
 
-    console.log(responsesPrint);
+    //console.log(responsesPrint);
 
     this.props.onSubmit(responsesPrint);
   };

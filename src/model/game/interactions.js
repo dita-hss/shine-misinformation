@@ -5,14 +5,6 @@ import {
   doTypeCheck,
 } from "../../utils/types";
 
-import {
-  connectToDevice,
-  queryDevice,
-  setPulseDuration,
-  sendTriggerToDevice,
-  sendTrigger
-} from "../../utils/fnirs";
-
 function toggleReactionPresenceInArray(
   currentReactions,
   reaction,
@@ -176,10 +168,10 @@ export class InteractionTimer {
     ) {
       this.interactionTimesFormatted.push(formattedDate);
       this.interactionTimesUnrelative.push(time);
-      console.log(
-        "When the post is first shown:",
-        this.interactionTimesFormatted
-      );
+      // console.log(
+      //   "When the post is first shown:",
+      //   this.interactionTimesFormatted
+      // );
     }
     //////////////////////ahs change end
 
@@ -229,14 +221,14 @@ export class InteractionTimer {
     ) {
       this.interactionTimesFormatted.push(formattedDate);
       this.interactionTimesUnrelative.push(time);
-      console.log(
-        "Self Report Startted/Submitted",
-        this.interactionTimesFormatted
-      );
-      console.log(
-        "Self Report Startted/Submitted",
-        this.interactionTimesUnrelative
-      );
+      // console.log(
+      //   "Self Report Startted/Submitted",
+      //   this.interactionTimesFormatted
+      // );
+      // console.log(
+      //   "Self Report Startted/Submitted",
+      //   this.interactionTimesUnrelative
+      // );
     }
 
     return new InteractionTimer(
@@ -284,7 +276,7 @@ export class InteractionTimer {
       -3
     )}.${milliseconds} ${timePart.slice(-2)}`;
 
-    console.log("Time when post and report are submitted:", formattedDate);
+    //console.log("Time when post and report are submitted:", formattedDate);
     //////////////////////ahs change end
 
     const lastShowTime = null;
@@ -339,11 +331,11 @@ export class InteractionTimer {
     ) {
       this.interactionTimesFormatted.push(formattedDate);
       this.interactionTimesUnrelative.push(time);
-      console.log("Last Interaction", this.interactionTimesFormatted);
-      console.log(
-        "Last Interaction Unrelative",
-        this.interactionTimesUnrelative
-      );
+      // console.log("Last Interaction", this.interactionTimesFormatted);
+      // console.log(
+      //   "Last Interaction Unrelative",
+      //   this.interactionTimesUnrelative
+      // );
     }
 
     //////////////////////ahs change end
@@ -662,7 +654,7 @@ export class GamePostInteraction {
     );
   }
   withUpdatedTimes(formattedTime, time) {
-    console.log("Time updated for first post", formattedTime);
+    //console.log("Time updated for first post", formattedTime);
     return new GamePostInteraction(
       this.postReactions,
       this.commentReactions,

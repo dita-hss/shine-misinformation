@@ -6,11 +6,9 @@ import React from "react";
 
 import {
   connectToDevice,
-  queryDevice,
-  setPulseDuration,
-  sendTriggerToDevice,
   sendTrigger
 } from "../../utils/fnirs";
+import { logTimestamp } from '../../utils/timestamp';
 
 
 export class GameIdentification extends ActiveGameScreen {
@@ -106,6 +104,7 @@ export class GameIdentification extends ActiveGameScreen {
 
     // this would mark a rest period
     sendTrigger(-1);
+    logTimestamp("rest");
 
     game.participant.participantID = id;
     game.saveLocally();

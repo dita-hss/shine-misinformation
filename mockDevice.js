@@ -11,7 +11,7 @@ mockPort.open((err) => {
     console.error("Failed to open mock device:", err);
     return;
   }
-  console.log("✅ Mock serial device started on /dev/ttys014");
+  console.log("Mock serial device started on /dev/ttys014");
 });
 
 // Simulate incoming data

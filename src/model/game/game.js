@@ -9,6 +9,7 @@ import {compressJson, decompressJson} from "../../database/compressJson";
 import {GamePostInteractionStore, InteractionTimer} from "./interactions";
 import {GamePost, GameSource, GameState} from "./gameState";
 import {GameParticipant} from "./gameParticipant";
+import { getTimestamps, resetTimestamps } from "../../utils/timestamp";
 
 
 /**
@@ -30,9 +31,10 @@ export class Game {
 
     startTimeRelative; 
     endTimeRelative; 
+    timestamps;
 
     constructor(study, studyModTime, sessionID, startTime, endTime,
-                states, participant, completionCode, savedResults, startTimeRelative, endTimeRelative) {
+                states, participant, completionCode, savedResults, startTimeRelative, endTimeRelative, timestamps = null) {
 
         doTypeCheck(study, Study, "Game Study");
         doTypeCheck(studyModTime, "number", "Game Study Modification Time");
@@ -56,8 +58,15 @@ export class Game {
         this.participant = participant;
         this.completionCode = completionCode;
         this.savedResults = savedResults;
-
         this.saveResultsToDatabasePromise = null;
+        this.timestamps = timestamps || {
+          absolute: {},
+          relative: {},
+          chronological: [],
+          relativeChronological: [],
+          onlyTriggerRelative: []
+        };
+
     }
 
     /**
@@ -81,10 +90,23 @@ export class Game {
             return this.saveResultsToDatabasePromise
         }
 
+        const { absolute, relative, chronological, relativeChronological, onlyTriggerRelative } =
+          getTimestamps();
+        this.timestamps = {
+          absolute,
+          relative,
+          chronological,
+          relativeChronological,
+          onlyTriggerRelative
+        };
+
+
         this.savedResults = false;
         this.saveResultsToDatabasePromise = postResults(this.study, this).then(() => {
             this.savedResults = true;
         });
+        //reset timestamps
+        resetTimestamps();
         return this.saveResultsToDatabasePromise;
     }
 
@@ -316,7 +338,15 @@ export class Game {
             "completionCode": this.completionCode || null,  // Firebase doesn't like undefined
             "savedResults": this.savedResults,
             "startTimeRelative": this.startTimeRelative,
-            "endTimeRelative": this.endTimeRelative
+            "endTimeRelative": this.endTimeRelative,
+            "timestamps": {
+                "absolute": this.timestamps.absolute,
+                "relative": this.timestamps.relative,
+                "chronological": this.timestamps.chronological,
+                "relativeChronological": this.timestamps.relativeChronological,
+                "onlyTriggerRelative" : this.timestamps.onlyTriggerRelative
+            },
+
         };
         return json;
     }
@@ -340,7 +370,8 @@ export class Game {
             json["completionCode"] || null,
             (json["savedResults"] !== undefined ? json["savedResults"] : true),
             json["startTimeRelative"],
-            json["endTimeRelative"]
+            json["endTimeRelative"],
+            json["timestamps"]
         );
     }
 
@@ -370,9 +401,9 @@ export class Game {
            0,
            -3
          )}.${milliseconds} ${timePart.slice(-2)}`;
-        console.log("Game started now at: " + getUnixEpochTimeSeconds());
-        console.log("Game started now at: " + Date.now());
-        console.log("Game started now at: " + formattedTime);
+        // console.log("Game started now at: " + getUnixEpochTimeSeconds());
+        // console.log("Game started now at: " + Date.now());
+        // console.log("Game started now at: " + formattedTime);
         game.calculateAllStates();
         game.saveLocally();
         return game;

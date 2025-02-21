@@ -4,7 +4,7 @@ import { Component } from "react";
 export class GamePrompt extends Component {
   renderPrompt() {
     const { prompt_number } = this.props;
-    console.log(prompt_number);
+    //console.log(prompt_number);
 
     switch (prompt_number) {
       case 1:
