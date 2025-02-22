@@ -13,9 +13,7 @@ import {ScrollTracker} from "../../model/game/scrollTracker";
 import {DynamicFeedbackController} from "./dynamicFeedback";
 import SelfReport from "./SelfReport.js";
 import RestScreen from "./RestScreen.js";
-import {
-  sendTrigger
-} from "../../utils/fnirs";
+import { sendTrigger } from "../../utils/fnirs";
 import { logTimestamp } from '../../utils/timestamp.js';
 
 // We want to ensure that we have smooth element scrollIntoView behaviour.
@@ -639,18 +637,17 @@ export class GameScreen extends ActiveGameScreen {
       // Show rest screen before prompt at post 39
       this.setState({ showRest: true, haveShownRest2: true });
       //sendTrigger(-1);
-      logTimestamp("rest");
+      //logTimestamp("rest");
     } else if (currentPostIndex === 19 && !this.state.haveShownRest) {
       this.setState({ showRest: true, haveShownRest: true });
       //sendTrigger(-1);
-      logTimestamp("rest");
+      //logTimestamp("rest");
     } else if (currentPostIndex !== 59) {
+      //only send a trigger and a timestamp if it is not a rest period or index 59
       logTimestamp("firstshown");
+      sendTrigger(currentPostIndex);
     }
-    
-    sendTrigger(currentPostIndex);
-    
-    
+    //sendTrigger(currentPostIndex);
 
     // Update interactions and set showSelfReport to false, then call onNextPost
     this.setState(

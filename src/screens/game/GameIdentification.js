@@ -102,9 +102,10 @@ export class GameIdentification extends ActiveGameScreen {
 
   async submitID(game, id) {
 
-    // this would mark a rest period
-    sendTrigger(-1);
-    logTimestamp("rest");
+    // this would mark a rest period- no longer since an instruction screen is presented prior to the rest
+    // trigger and timestamp for this is handled in the restscreen
+    // sendTrigger(-1);
+    // logTimestamp("rest");
 
     game.participant.participantID = id;
     game.saveLocally();
