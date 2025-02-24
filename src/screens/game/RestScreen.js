@@ -23,7 +23,7 @@ export default class RestScreen extends Component {
       // amount of time for the fixation cross to be shown
       this.fixationTimeout = setTimeout(() => {
         this.props.onTimeout();
-      }, 4000);
+      }, 40000);
     }, 4000);
   }
 
