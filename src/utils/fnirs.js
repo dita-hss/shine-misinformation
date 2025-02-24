@@ -1,3 +1,5 @@
+import { versionHandler } from "../utils/versionHandler";
+
 let port;
 let writer;
 let reader;
@@ -130,43 +132,12 @@ export async function sendTrigger(postIndex) {
       "Logical condition:",
       logicalCode,
       "Unique code:",
-      uniqueCode,
-      "Current condition:",
-      currentCondition
+      uniqueCode
     );
 
     const command = `mh${String.fromCharCode(uniqueCode)}${String.fromCharCode(0)}\n`;
 
-    
-
-    //const command = new Uint8Array([109, 104, uniqueCode, 0]);
-
-    console.log("Command to send:", command);
-    console.log("matlab comparison", Array.from(new TextEncoder().encode(command)));
-    console.log("matlab comparison2", command);
-    console.log("matlab comparison3", new Uint8Array([109, 104, uniqueCode, 0]));
-
-
-    // const encoder = new TextEncoder("ascii");
-    // const commandBytes = encoder.encode(
-    //   `mh${String.fromCharCode(uniqueCode)}${String.fromCharCode(0)}`
-    // );
-    //await writer.write(commandBytes);
-
-    //await flushDevice();
     await delay(100);
-
-    // if (randomNumber === 1) { // works but not one after another
-    //   await writer.write(new TextEncoder().encode('mh' + String.fromCharCode(1) + String.fromCharCode(0)));
-    // }
-    // if (randomNumber === 2) { // works
-    //   await writer.write(new TextEncoder().encode(command));
-    // } if (randomNumber === 3) { // does not work? might be bc right after 2? 
-    //   await writer.write(new Uint8Array([109, 104, uniqueCode, 0]));
-    // } if (randomNumber === 4) { //error provided value is not array buffer
-    //   await writer.write(command);
-    // }
-    //await writer.write(new TextEncoder().encode('mh' + String.fromCharCode(uniqueCode) + String.fromCharCode(0)));
     await writer.write(new TextEncoder().encode(command));
     // await writer.write(new Uint8Array([109, 104, uniqueCode, 0]));
     // await writer.write(command);
@@ -180,15 +151,30 @@ export async function sendTrigger(postIndex) {
 }
 
 function getLogicalCondition(count) {
-  if (count === 1 || count===  22|| count === 43) {
-    return 1; // "Rest"
-  } else if (count >= 2 && count <= 21) {
-    return 2; // "Condition 1"
-  } else if (count >= 23 && count <= 42) {
-    return 3; // "Condition 2"
-  } else if (count >= 44 && count <= 63) {
-    return 4; // "Condition 3"
+  const version = versionHandler.getVersion();
+
+  if (version === "1") {
+    if (count === 1 || count === 22 || count === 43) {
+      return 1; // "Rest"
+    } else if (count >= 2 && count <= 21) {
+      return 2; // "Condition 1"
+    } else if (count >= 23 && count <= 42) {
+      return 3; // "Condition 2"
+    } else if (count >= 44 && count <= 63) {
+      return 4; // "Condition 3"
+    }
+  } else if (version === "2") {
+    if (count === 1 || count === 22 || count === 43) {
+      return 1; // "Rest"
+    } else if (count >= 2 && count <= 21) {
+      return 4; // "Condition 3"
+    } else if (count >= 23 && count <= 42) {
+      return 2; // "Condition 1" 
+    } else if (count >= 44 && count <= 63) {
+      return 3; // "Condition 2"
+    }
   }
+
   return 0; // Fallback (should NOT happen)
 }
 

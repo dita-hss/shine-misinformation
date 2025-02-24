@@ -1,6 +1,7 @@
 import FileSaver from 'file-saver';
 import {readAllCompletedStudyResults} from "../database/getFromDB";
 import {createDateFromUnixEpochTimeSeconds, formatUTCDate} from "../utils/time";
+import {versionHandler} from "../utils/versionHandler";
 
 const excel = require("exceljs");
 
@@ -21,7 +22,7 @@ function determineVeracity(game) {
     if (!interaction || !interaction.selfReportResponses) continue;
 
     const interactionSelfReport = interaction.selfReportResponses;
-    const participantVeracity = interactionSelfReport["truthRating"] === "true";
+    const participantVeracity = interactionSelfReport["truthRating"] === "yes";
 
     const postState = game.states[i]?.currentPost?.post;
     if (!postState) continue;
@@ -217,14 +218,28 @@ function constructWorkbook(study, results, problems) {
       const postVeracity = state.currentPost.post.isTrue ? true : false;
 
       // Determine condition based on post index
+
+      const version = versionHandler.getVersion();
       let conditionCategory;
-      if (stateIndex < 20) {
+
+      if (version === "1") {
+        if (stateIndex < 20) {
           conditionCategory = 1;
-      } else if (stateIndex < 40) {
+        } else if (stateIndex < 40) {
           conditionCategory = "MIST20";
-      } else {
+        } else {
           conditionCategory = 2;
+        }
+      } else if (version === "2") {
+        if (stateIndex < 20) {
+          conditionCategory = 2;
+        } else if (stateIndex < 40) {
+          conditionCategory = 1;
+        } else {
+          conditionCategory = "MIST20";
+        }
       }
+      
       //const flags = state.currentPost.numberOfReactions.flag;
       const interaction = participant.postInteractions.get(stateIndex);
 

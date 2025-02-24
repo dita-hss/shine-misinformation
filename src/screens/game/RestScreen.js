@@ -37,7 +37,7 @@ export default class RestScreen extends Component {
       <div className="flex items-center justify-center h-screen bg-gray-200">
         {this.state.showMessage ? (
           <h1 className="text-2xl font-bold text-gray-800">
-            Please stare at the fixation cross until it disappears
+            Please stare at the fixation cross until it disappears.
           </h1>
         ) : this.state.showFixationCross ? (
           <h1 className="text-5xl font-bold text-gray-800">+</h1>

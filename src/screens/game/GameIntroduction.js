@@ -2,6 +2,7 @@ import {ContinueBanner} from "../../components/ContinueButton";
 import {ActiveGameScreen} from "./ActiveGameScreen";
 import React from "react";
 import {renderToStaticMarkup} from "react-dom/server";
+import { versionHandler } from "../../utils/versionHandler";
 
 
 /**
@@ -75,7 +76,12 @@ export class GameIntroductionScreen extends ActiveGameScreen {
 
 export class GamePreIntroduction extends GameIntroductionScreen {
     getContent(study) {
-        return study.pagesSettings.preIntro;
+        console.log(study.pagesSettings.preIntro);
+
+        // i will be using the preintro page to set the counterbalance of the experiment
+        //this fucntion call is for the fnirs
+        versionHandler.setVersion(study.pagesSettings.preIntro);
+        return "";
     }
 
     getTarget(study) {
