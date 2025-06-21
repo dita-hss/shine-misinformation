@@ -141,6 +141,19 @@ export async function sendTrigger(postIndex) {
     await writer.write(new TextEncoder().encode(command));
     // await writer.write(new Uint8Array([109, 104, uniqueCode, 0]));
     // await writer.write(command);
+
+    await fetch("http://localhost:5000/sendTrigger", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        event: "triggerSent",
+        condition: currentCondition,
+        postIndex: postIndex
+      }),
+    });
+
     await delay(100);
     //await flushDevice();
     console.log("Command sent successfully.");
