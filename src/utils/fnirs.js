@@ -148,9 +148,8 @@ export async function sendTrigger(postIndex) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        event: "triggerSent",
-        condition: currentCondition,
-        postIndex: postIndex
+        uniqueCode, // computed in the browser
+        postIndex, // for logging/tracking
       }),
     });
 
