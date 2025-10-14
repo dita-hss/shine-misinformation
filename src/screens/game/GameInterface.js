@@ -575,7 +575,7 @@ export class GameScreen extends ActiveGameScreen {
         },
         () => {
           //this.submitPost(this.getCurrentPostIndex());
-          logTimestamp(`selfreport_start:${idx}`);
+          logTimestamp("interactions");
         }
       );
 
