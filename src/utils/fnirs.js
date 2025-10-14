@@ -138,7 +138,7 @@ export async function sendTrigger(postIndex) {
     const command = `mh${String.fromCharCode(uniqueCode)}${String.fromCharCode(0)}\n`;
 
     await delay(100);
-    await writer.write(new TextEncoder().encode(command));
+    // await writer.write(new TextEncoder().encode(command));
     // await writer.write(new Uint8Array([109, 104, uniqueCode, 0]));
     // await writer.write(command);
 
@@ -148,9 +148,8 @@ export async function sendTrigger(postIndex) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        event: "triggerSent",
-        condition: currentCondition,
-        postIndex: postIndex
+        uniqueCode, // computed in the browser
+        postIndex, // for logging/tracking
       }),
     });
 
