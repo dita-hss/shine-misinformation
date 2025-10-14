@@ -558,6 +558,7 @@ export class GameScreen extends ActiveGameScreen {
     if (study.uiSettings.displayPostsInFeed) {
       this.scrollToNextPost(true);
     } else {
+      const idx = currentPostIndex;
 
       this.setState(
         (state) => {
@@ -574,6 +575,7 @@ export class GameScreen extends ActiveGameScreen {
         },
         () => {
           //this.submitPost(this.getCurrentPostIndex());
+          logTimestamp(`selfreport_start:${idx}`);
         }
       );
 
