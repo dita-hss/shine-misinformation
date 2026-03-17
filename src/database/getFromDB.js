@@ -63,6 +63,7 @@ export async function readStudySettings(studyID) {
 
 /**
  * Returns a Promise with a list of all the studies in the database.
+ * Admins (present in /Admins/{uid}) get all studies; other users get only studies they authored.
  * TODO : In the future, it may be good to use pages, as if the number of studies
  *        becomes really large, this will become very costly.
  */
@@ -70,7 +71,11 @@ export async function readAllStudies(user) {
     if (!user)
         throw new Error("No user provided");
 
-    const getStudiesQuery = query(collection(db, "Studies"), where("authorID", "==", user.uid));
+    const isAdmin = await readIsAdmin(user);
+    const studiesRef = collection(db, "Studies");
+    const getStudiesQuery = isAdmin
+        ? query(studiesRef)
+        : query(studiesRef, where("authorID", "==", user.uid));
     const snapshot = await getDocs(getStudiesQuery);
     return snapshot.docs.map((doc) => studyOrBrokenFromJson(doc.id, decompressJson(doc.data())));
 }
